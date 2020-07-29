@@ -32,7 +32,7 @@ def create_instances(predictions, image_size):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="A script that visualizes the json predictions from COCO dataset.")
+    parser = argparse.ArgumentParser(description="A script that visualizes the json predictions.")
     parser.add_argument("--input", required=True, help="JSON file produced by the model")
     parser.add_argument("--output", required=True, help="output directory")
     parser.add_argument("--dataset", help="name of the dataset", default="coco_2017_val")

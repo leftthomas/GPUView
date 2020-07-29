@@ -20,15 +20,10 @@ pip install opencv-python
 ```
 
 ## Datasets
-`PASCAL VOC 2007` and `MS COCO 2017` datasets are used in this repo. The datasets are assumed to exist in a directory 
+`PASCAL VOC 2007` and `MS COCO 2015` datasets are used in this repo. The datasets are assumed to exist in a directory 
 specified by the environment variable `DETECTRON2_DATASETS`. You can set the location for these datasets by 
 `export DETECTRON2_DATASETS=/path/to/datasets`. The dataset structure should be organized as 
 [this](https://github.com/facebookresearch/detectron2/tree/master/datasets) described.
-
-Before training, the pre-trained backbone models ([ResNet50](https://hangzh.s3.amazonaws.com/encoding/models/resnet50-25c4b509.zip), 
-[ResNet101](https://hangzh.s3.amazonaws.com/encoding/models/resnet101-2a57e44d.zip) and 
-[ResNet152](https://hangzh.s3.amazonaws.com/encoding/models/resnet152-0d43d698.zip)) on ImageNet should be downloaded 
-and unzipped into `epochs`.  
 
 ## Training
 To train a model, run
@@ -36,23 +31,31 @@ To train a model, run
 python train_net.py --config-file <config.yaml>
 ```
 
-For example, to launch end-to-end EMANet training with `ResNet-50` backbone for `coco` dataset on 8 GPUs, one should execute:
+For example, to launch end-to-end Relation R-CNN training with `ResNet-101` backbone for `coco` dataset on 8 GPUs, 
+one should execute:
 ```bash
-python train_net.py --config-file configs/r50_coco.yaml --num-gpus 8
+python train_net.py --config-file configs/relation_rcnn_coco.yaml --num-gpus 8
 ```
 
 ## Evaluation
 Model evaluation can be done similarly:
 ```bash
-python train_net.py --config-file configs/r50_coco.yaml --num-gpus 8 --eval-only MODEL.WEIGHTS epochs/model.pth
+python train_net.py --config-file configs/relation_rcnn_coco.yaml --num-gpus 8 --eval-only MODEL.WEIGHTS epochs/model.pth
+```
+
+## Visualization
+Visualize model output can be done like this:
+```bash
+python visualize.py --input output/relation_rcnn_coco_out.json --output results --dataset coco_2014_minival
 ```
 
 ## Results
 There are some difference between this implementation and official implementation:
-1. The image sizes of `Multi-Scale Training` are (640, 672, 704, 736, 768, 800) for `coco` dataset;
-2. The image sizes of `Multi-Scale Training` are (800, 832, 864, 896, 928, 960, 992, 1024) for `cityscapes` dataset;
-3. No `RandomCrop` used;
-4. Learning rate policy is `WarmupCosineLR`.
+1. Not support the `VGG16` backbone;
+2. The image sizes of `Multi-Scale Training` are (640, 672, 704, 736, 768, 800) for `coco` dataset;
+3. The image sizes of `Multi-Scale Training` are (800, 832, 864, 896, 928, 960, 992, 1024) for `cityscapes` dataset;
+4. No `RandomCrop` used;
+5. Learning rate policy is `WarmupCosineLR`.
 
 ### COCO
 <table>
