@@ -1,20 +1,3 @@
-#!/usr/bin/env python
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-"""
-Detectron2 training script with a plain training loop.
-This script reads a given config file and runs the training or evaluation.
-It is an entry point that is able to train standard models in detectron2.
-In order to let one script support training of many models,
-this script contains logic that are specific to these built-in models and therefore
-may not be suitable for your own project.
-For example, your research project perhaps only needs a single "evaluator".
-Therefore, we recommend you to use detectron2 as a library and take
-this file as an example of how to use the library.
-You may want to write your own script with your datasets and other customizations.
-Compared to "train_net.py", this script supports fewer default features.
-It also includes fewer abstraction, therefore is easier to add custom logic.
-"""
-
 import logging
 import os
 from collections import OrderedDict
@@ -185,7 +168,7 @@ def do_train(cfg, model, resume=False):
             periodic_checkpointer.step(iteration)
 
 
-def setup(args):
+def main(args):
     """
     Create configs and perform basic setups.
     """
@@ -196,11 +179,6 @@ def setup(args):
     default_setup(
         cfg, args
     )  # if you don't like any of the default setup, write your own setup code
-    return cfg
-
-
-def main(args):
-    cfg = setup(args)
 
     model = build_model(cfg)
     logger.info("Model:\n{}".format(model))
@@ -212,9 +190,7 @@ def main(args):
 
     distributed = comm.get_world_size() > 1
     if distributed:
-        model = DistributedDataParallel(
-            model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-        )
+        model = DistributedDataParallel(model, device_ids=[comm.get_local_rank()], broadcast_buffers=False)
 
     do_train(cfg, model, resume=args.resume)
     return do_test(cfg, model)
@@ -223,11 +199,5 @@ def main(args):
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
     print("Command Line Args:", args)
-    launch(
-        main,
-        args.num_gpus,
-        num_machines=args.num_machines,
-        machine_rank=args.machine_rank,
-        dist_url=args.dist_url,
-        args=(args,),
-    )
+    launch(main, args.num_gpus, num_machines=args.num_machines, machine_rank=args.machine_rank, dist_url=args.dist_url,
+           args=(args,), )

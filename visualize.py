@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-
 import argparse
 import json
 import os
@@ -31,17 +28,11 @@ def create_instances(predictions, image_size):
     ret.pred_boxes = Boxes(bbox)
     ret.pred_classes = labels
 
-    try:
-        ret.pred_masks = [predictions[i]["segmentation"] for i in chosen]
-    except KeyError:
-        pass
     return ret
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="A script that visualizes the json predictions from COCO or LVIS dataset."
-    )
+    parser = argparse.ArgumentParser(description="A script that visualizes the json predictions from COCO dataset.")
     parser.add_argument("--input", required=True, help="JSON file produced by the model")
     parser.add_argument("--output", required=True, help="output directory")
     parser.add_argument("--dataset", help="name of the dataset", default="coco_2017_val")
@@ -63,12 +54,6 @@ if __name__ == "__main__":
 
         def dataset_id_map(ds_id):
             return metadata.thing_dataset_id_to_contiguous_id[ds_id]
-
-    elif "lvis" in args.dataset:
-        # LVIS results are in the same format as COCO results, but have a different
-        # mapping from dataset category id to contiguous category id in [0, #categories - 1]
-        def dataset_id_map(ds_id):
-            return ds_id - 1
 
     else:
         raise ValueError("Unsupported dataset: {}".format(args.dataset))
