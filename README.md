@@ -30,8 +30,7 @@ To train a model, run
 python train_net.py --config-file <config.yaml>
 ```
 
-For example, to launch end-to-end Relation R-CNN training with `ResNet-101` backbone for `coco` dataset on 8 GPUs, 
-one should execute:
+For example, to launch end-to-end Relation R-CNN training for `coco` dataset on 8 GPUs, one should execute:
 ```bash
 python train_net.py --config-file configs/relation_rcnn_coco.yaml --num-gpus 8
 ```
@@ -51,12 +50,9 @@ python visualize.py --input output/relation_rcnn_coco_out.json --output results 
 ## Results
 There are some difference between this implementation and official implementation:
 1. Not support the `VGG16` backbone;
-2. The image sizes of `Multi-Scale Training` are (640, 672, 704, 736, 768, 800) for `coco` dataset;
-3. The image sizes of `Multi-Scale Training` are (800, 832, 864, 896, 928, 960, 992, 1024) for `cityscapes` dataset;
-4. No `RandomCrop` used;
-5. Learning rate policy is `WarmupCosineLR`.
+2. The test image sizes are not resized to `600*1000`.
 
-### COCO
+### VOC
 <table>
 	<tbody>
 		<!-- START TABLE -->
@@ -110,7 +106,7 @@ There are some difference between this implementation and official implementatio
 	</tbody>
 </table>
 
-### Cityscapes
+### COCO
 <table>
 	<tbody>
 		<!-- START TABLE -->
