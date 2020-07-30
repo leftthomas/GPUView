@@ -2,6 +2,8 @@ _BASE_: "base.yaml"
 MODEL:
   ROI_HEADS:
     NUM_CLASSES: 80
+  ROI_BOX_HEAD:
+    POOLER_RESOLUTION: 7
 DATASETS:
   TRAIN: ("coco_2014_train", "coco_2014_val")
   TEST: ("coco_2014_minival",)
@@ -11,6 +13,7 @@ SOLVER:
   MAX_ITER: 270000
 INPUT:
   MIN_SIZE_TRAIN: (640, 672, 704, 736, 768, 800)
+OUTPUT_DIR: "./output/relation_coco"
 #INPUT:
 #  CROP:
 #    ENABLED: True
