@@ -11,8 +11,7 @@ conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
 ```
 - detectron2
 ```
-python -m pip install detectron2 -f \
-  https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.5/index.html
+pip install git+https://github.com/facebookresearch/detectron2.git@master
 ```
 - opencv
 ```
