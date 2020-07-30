@@ -50,7 +50,8 @@ python visualize.py --input output/relation_rcnn_coco_out.json --output results 
 ## Results
 There are some difference between this implementation and official implementation:
 1. Not support the `VGG16` backbone;
-2. The test image sizes are not resized to `600*1000`.
+2. The test image sizes are not resized to `600*1000`;
+3. The training step is `270,000` for `coco` dataset and `18,000` for `voc` dataset.
 
 ### VOC
 <table>

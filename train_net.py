@@ -28,6 +28,8 @@ from detectron2.utils.events import (
 )
 from torch.nn.parallel import DistributedDataParallel
 
+from rcnn import add_relation_config
+
 logger = logging.getLogger("detectron2")
 
 
@@ -127,6 +129,7 @@ def do_train(cfg, model, resume=False):
 
 def main(args):
     cfg = get_cfg()
+    add_relation_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()

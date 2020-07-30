@@ -1,19 +1,16 @@
 from detectron2.config import CfgNode as CN
 
 
-def add_ema_config(cfg):
+def add_relation_config(cfg):
     """
-    Add config for EMANet.
+    Add config for Relation R-CNN.
     """
     _C = cfg
 
-    _C.MODEL.DILATED_RESNET = CN()
+    _C.MODEL.SEMANTIC_RELATION = CN()
+    _C.MODEL.SEMANTIC_RELATION.ETA = 0.4
+    _C.MODEL.SEMANTIC_RELATION.GAMMA = 0.2
+    _C.MODEL.SEMANTIC_RELATION.TAU = 0.5
 
-    _C.MODEL.DILATED_RESNET.DEPTH = 50
-    _C.MODEL.DILATED_RESNET.NORM = "BN"
-    _C.MODEL.DILATED_RESNET.STRIDE = 8
-    _C.MODEL.SEM_SEG_HEAD.ITERATION_NUM = 3
-
-    _C.MODEL.EMA = CN()
-    _C.MODEL.EMA.EM_MOM = 0.9
-    _C.MODEL.EMA.BN_MOM = 3e-4
+    _C.MODEL.SPATIAL_RELATION = CN()
+    _C.MODEL.SPATIAL_RELATION.K = 8

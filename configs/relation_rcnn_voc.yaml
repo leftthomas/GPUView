@@ -1,6 +1,7 @@
 _BASE_: "base.yaml"
 MODEL:
   ROI_HEADS:
+    NAME: "RelationROIHeads"
     NUM_CLASSES: 20
   ROI_BOX_HEAD:
     POOLER_RESOLUTION: 7
