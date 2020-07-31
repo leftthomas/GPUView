@@ -3,8 +3,6 @@ MODEL:
   ROI_HEADS:
     NAME: "RelationROIHeads"
     NUM_CLASSES: 20
-  ROI_BOX_HEAD:
-    POOLER_RESOLUTION: 7
 DATASETS:
   TRAIN: ("voc_2007_trainval", "voc_2012_trainval")
   TEST: ("voc_2007_test",)
@@ -16,8 +14,3 @@ SOLVER:
 INPUT:
   MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
 OUTPUT_DIR: "./output/relation_voc"
-#INPUT:
-#  CROP:
-#    ENABLED: True
-#    TYPE: "absolute"
-#    SIZE: [600, 1000]

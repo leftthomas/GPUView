@@ -1,6 +1,51 @@
-from detectron2.layers import ShapeSpec
-from detectron2.modeling.roi_heads.fast_rcnn import FastRCNNOutputLayers
+import torch
+from detectron2.data import MetadataCatalog
 from detectron2.modeling.roi_heads.roi_heads import ROI_HEADS_REGISTRY, Res5ROIHeads
+from torch import nn
+from torchtext.vocab import GloVe
+
+
+class SemanticRelation(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.eta = cfg.MODEL.SEMANTIC_RELATION.ETA
+        self.gamma = cfg.MODEL.SEMANTIC_RELATION.GAMMA
+        self.tau = cfg.MODEL.SEMANTIC_RELATION.TAU
+        # init vocabs
+        vocabs = GloVe(name='6B')
+        categories = MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes
+        self.word_embedding = []
+        # process missing words
+        for category in categories:
+            if ' ' in category:
+                tokens = category.split(' ')
+            else:
+                if category == 'diningtable':
+                    tokens = ['dining', 'table']
+                elif category == 'pottedplant':
+                    tokens = ['potted', 'plant']
+                elif category == 'tvmonitor':
+                    tokens = ['tv', 'monitor']
+                else:
+                    tokens = category
+            embeddings = vocabs.get_vecs_by_tokens(tokens)
+            if embeddings.size(0) == 2:
+                embeddings = embeddings.mean(dim=0)
+            self.word_embedding.append(embeddings)
+        self.word_embedding = torch.stack(self.word_embedding, dim=0).to(cfg.MODEL.DEVICE)
+
+    def forward(self, features, classes):
+        nodes = [self.word_embedding[index] for index in classes]
+        return nodes
+
+
+class SpatialRelation(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.k = cfg.MODEL.SPATIAL_RELATION.K
+
+    def forward(self, x):
+        return x
 
 
 @ROI_HEADS_REGISTRY.register()
@@ -12,12 +57,8 @@ class RelationROIHeads(Res5ROIHeads):
 
     def __init__(self, cfg, input_shape):
         super().__init__(cfg, input_shape)
-
-        stage_channel_factor = 2 ** 3  # res5 is 8x res2
-        out_channels = cfg.MODEL.RESNETS.RES2_OUT_CHANNELS * stage_channel_factor
-        self.box_predictor = FastRCNNOutputLayers(
-            cfg, ShapeSpec(channels=out_channels, height=1, width=1)
-        )
+        self.semantic = SemanticRelation(cfg)
+        self.spatial = SpatialRelation(cfg)
 
     def forward(self, images, features, proposals, targets=None):
         """
@@ -25,6 +66,7 @@ class RelationROIHeads(Res5ROIHeads):
         """
         del images
 
+        gt_classes = [x.gt_classes for x in targets]
         if self.training:
             assert targets
             proposals = self.label_and_sample_proposals(proposals, targets)
@@ -34,7 +76,12 @@ class RelationROIHeads(Res5ROIHeads):
         box_features = self._shared_roi_transform(
             [features[f] for f in self.in_features], proposal_boxes
         )
-        predictions = self.box_predictor(box_features.mean(dim=[2, 3]))
+        box_features = box_features.mean(dim=[2, 3])
+        # obtain relations
+        semantic_relation = self.semantic(box_features, gt_classes)
+        spatial_relation = self.spatial(box_features)
+        box_features = torch.cat((semantic_relation, spatial_relation), dim=-1)
+        predictions = self.box_predictor(box_features)
 
         if self.training:
             del features
