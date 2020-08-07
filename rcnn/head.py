@@ -105,15 +105,6 @@ class SemanticRelation(nn.Module):
         return x
 
 
-class SpatialRelation(nn.Module):
-    def __init__(self, cfg, input_shape):
-        super().__init__()
-        self.k = cfg.MODEL.SPATIAL_RELATION.K
-
-    def forward(self, x):
-        return x
-
-
 @ROI_HEADS_REGISTRY.register()
 class RelationROIHeads(Res5ROIHeads):
     """
@@ -124,7 +115,6 @@ class RelationROIHeads(Res5ROIHeads):
     def __init__(self, cfg, input_shape):
         super().__init__(cfg, input_shape)
         self.semantic_relation = SemanticRelation(cfg, cfg.MODEL.RESNETS.RES2_OUT_CHANNELS * 8)
-        self.spatial_relation = SpatialRelation(cfg, input_shape)
 
     def forward(self, images, features, proposals, targets=None):
         """
@@ -144,9 +134,7 @@ class RelationROIHeads(Res5ROIHeads):
         box_features = box_features.mean(dim=[2, 3])
         # obtain relations
         semantic_features = self.semantic_relation(box_features)
-        spatial_features = self.spatial_relation(box_features)
-        box_features = torch.cat((semantic_features, spatial_features), dim=-1)
-        predictions = self.box_predictor(box_features)
+        predictions = self.box_predictor(semantic_features)
 
         if self.training:
             del features
