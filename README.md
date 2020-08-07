@@ -63,9 +63,9 @@ There are some difference between this implementation and official implementatio
 <table>
 	<tbody>
 		<th>Method</th>
-		<th>AP %</th>
-		<th>AP.50 %</th>
-		<th>AP.75 %</th>
+		<th>AP</th>
+		<th>AP<sup>50</sup></th>
+		<th>AP<sup>75</sup></th>
 		<th>download link</th>
 		<tr>
 			<td align="center"><a href="configs/faster_rcnn_voc.yaml">Faster R-CNN</a></td>
@@ -88,12 +88,12 @@ There are some difference between this implementation and official implementatio
 <table>
 	<tbody>
 		<th>Method</th>
-		<th>AP %</th>
-		<th>AP.50 %</th>
-		<th>AP.75 %</th>
-		<th>APs %</th>
-		<th>APm %</th>
-		<th>APl %</th>
+		<th>AP</th>
+		<th>AP<sup>50</sup></th>
+		<th>AP<sup>75</sup></th>
+		<th>AP<sup>s</sup></th>
+		<th>AP<sup>m</sup></th>
+		<th>AP<sup>l</sup></th>
 		<th>download link</th>
 		<tr>
 			<td align="center"><a href="configs/faster_rcnn_coco.yaml">Faster R-CNN</a></td>
