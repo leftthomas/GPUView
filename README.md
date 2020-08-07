@@ -91,16 +91,25 @@ There are some difference between this implementation and official implementatio
 		<th>AP %</th>
 		<th>AP.50 %</th>
 		<th>AP.75 %</th>
+		<th>APs %</th>
+		<th>APm %</th>
+		<th>APl %</th>
 		<th>download link</th>
 		<tr>
 			<td align="center"><a href="configs/faster_rcnn_coco.yaml">Faster R-CNN</a></td>
-			<td align="center">-</td>
-			<td align="center">-</td>
-			<td align="center">-</td>
+			<td align="center">50.70</td>
+			<td align="center">71.80</td>
+			<td align="center">56.01</td>
+		    <td align="center">30.22</td>
+			<td align="center">57.83</td>
+			<td align="center">68.73</td>
 			<td align="center"><a href="https://pan.baidu.com/s/1jP7zWezVPBZWx_9LjJCgWg">model</a>&nbsp;|&nbsp;xxi8</td>
 		</tr>
 		<tr>
 			<td align="center"><a href="configs/relation_rcnn_coco.yaml">Relation R-CNN</a></td>
+			<td align="center">-</td>
+			<td align="center">-</td>
+			<td align="center">-</td>
 			<td align="center">-</td>
 			<td align="center">-</td>
 			<td align="center">-</td>
