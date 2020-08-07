@@ -21,10 +21,6 @@ pip install opencv-python
 ```
 conda install -c pytorch torchtext
 ```
-- torch-geometric
-```
-pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
-```
 
 ## Datasets
 `PASCAL VOC 2007` and `MS COCO 2015` datasets are used in this repo. The datasets are assumed to exist in a directory 
