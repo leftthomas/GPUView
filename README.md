@@ -76,9 +76,9 @@ There are some difference between this implementation and official implementatio
 		</tr>
 		<tr>
 			<td align="center"><a href="configs/relation_rcnn_voc.yaml">Relation R-CNN</a></td>
-			<td align="center">-</td>
-			<td align="center">-</td>
-			<td align="center">-</td>
+			<td align="center">42.19</td>
+			<td align="center">71.81</td>
+			<td align="center">42.94</td>
 			<td align="center"><a href="https://pan.baidu.com/s/1BeGS7gckGAczd1euB55EFA">model</a>&nbsp;|&nbsp;1jhd</td>
 		</tr>
 	</tbody>
