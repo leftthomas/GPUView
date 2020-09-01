@@ -28,7 +28,7 @@ from detectron2.utils.events import (
 )
 from torch.nn.parallel import DistributedDataParallel
 
-from rcnn import add_relation_config
+from mask import add_relation_config
 
 logger = logging.getLogger("detectron2")
 

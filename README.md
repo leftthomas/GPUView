@@ -1,5 +1,5 @@
-# Relation R-CNN
-A PyTorch implementation of Relation R-CNN based on the paper [Improving Object Detection with Relation Mining Network]().
+# GraphMask
+A PyTorch implementation of GraphMask based on the paper [GraphMask: single shot instance segmentation with relation mining]().
 
 ![Network Architecture image from the paper](structure.png)
 
@@ -16,10 +16,6 @@ pip install git+https://github.com/facebookresearch/detectron2.git@master
 - opencv
 ```
 pip install opencv-python
-```
-- torchtext
-```
-conda install -c pytorch torchtext
 ```
 
 ## Datasets
