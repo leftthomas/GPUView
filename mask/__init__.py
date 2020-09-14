@@ -1,2 +1,2 @@
-from .config import add_relation_config
+from .config import add_center_config
 from .head import RelationROIHeads

@@ -1,9 +1,9 @@
 from detectron2.config import CfgNode as CN
 
 
-def add_relation_config(cfg):
+def add_center_config(cfg):
     """
-    Add config for Relation R-CNN.
+    Add config for CenterMask.
     """
     _C = cfg
 

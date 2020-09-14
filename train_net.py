@@ -13,8 +13,14 @@ from detectron2.data import (
 )
 from detectron2.engine import default_argument_parser, default_setup, launch
 from detectron2.evaluation import (
+    CityscapesInstanceEvaluator,
+    CityscapesSemSegEvaluator,
     COCOEvaluator,
+    COCOPanopticEvaluator,
+    DatasetEvaluators,
+    LVISEvaluator,
     PascalVOCDetectionEvaluator,
+    SemSegEvaluator,
     inference_on_dataset,
     print_csv_format,
 )
@@ -28,7 +34,7 @@ from detectron2.utils.events import (
 )
 from torch.nn.parallel import DistributedDataParallel
 
-from mask import add_relation_config
+from mask import add_center_config
 
 logger = logging.getLogger("detectron2")
 
@@ -36,14 +42,43 @@ logger = logging.getLogger("detectron2")
 def get_evaluator(cfg, dataset_name, output_folder=None):
     if output_folder is None:
         output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
+    evaluator_list = []
     evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
-    if evaluator_type == "coco":
-        return COCOEvaluator(dataset_name, cfg, True, output_folder)
+    if evaluator_type in ["sem_seg", "coco_panoptic_seg"]:
+        evaluator_list.append(
+            SemSegEvaluator(
+                dataset_name,
+                distributed=True,
+                num_classes=cfg.MODEL.SEM_SEG_HEAD.NUM_CLASSES,
+                ignore_label=cfg.MODEL.SEM_SEG_HEAD.IGNORE_VALUE,
+                output_dir=output_folder,
+            )
+        )
+    if evaluator_type in ["coco", "coco_panoptic_seg"]:
+        evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder))
+    if evaluator_type == "coco_panoptic_seg":
+        evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
+    if evaluator_type == "cityscapes_instance":
+        assert (
+                torch.cuda.device_count() >= comm.get_rank()
+        ), "CityscapesEvaluator currently do not work with multiple machines."
+        return CityscapesInstanceEvaluator(dataset_name)
+    if evaluator_type == "cityscapes_sem_seg":
+        assert (
+                torch.cuda.device_count() >= comm.get_rank()
+        ), "CityscapesEvaluator currently do not work with multiple machines."
+        return CityscapesSemSegEvaluator(dataset_name)
     if evaluator_type == "pascal_voc":
         return PascalVOCDetectionEvaluator(dataset_name)
-    else:
+    if evaluator_type == "lvis":
+        return LVISEvaluator(dataset_name, cfg, True, output_folder)
+    if len(evaluator_list) == 0:
         raise NotImplementedError(
-            "no Evaluator for the dataset {} with the type {}".format(dataset_name, evaluator_type))
+            "no Evaluator for the dataset {} with the type {}".format(dataset_name, evaluator_type)
+        )
+    if len(evaluator_list) == 1:
+        return evaluator_list[0]
+    return DatasetEvaluators(evaluator_list)
 
 
 def do_test(cfg, model):
@@ -129,7 +164,7 @@ def do_train(cfg, model, resume=False):
 
 def main(args):
     cfg = get_cfg()
-    add_relation_config(cfg)
+    add_center_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()

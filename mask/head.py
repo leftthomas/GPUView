@@ -4,7 +4,6 @@ import torch
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.modeling.roi_heads.roi_heads import ROI_HEADS_REGISTRY, Res5ROIHeads
 from torch import nn
-from torchtext.vocab import GloVe
 
 
 class GraphConvolution(nn.Module):

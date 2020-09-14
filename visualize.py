@@ -27,7 +27,10 @@ def create_instances(predictions, image_size):
     ret.scores = score
     ret.pred_boxes = Boxes(bbox)
     ret.pred_classes = labels
-
+    try:
+        ret.pred_masks = [predictions[i]["segmentation"] for i in chosen]
+    except KeyError:
+        pass
     return ret
 
 
