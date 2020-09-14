@@ -1,31 +1,22 @@
 import math
 
 import torch
-from detectron2.layers import ShapeSpec
 from detectron2.layers.batch_norm import get_norm
 from detectron2.modeling.backbone import Backbone
 from detectron2.modeling.backbone.build import BACKBONE_REGISTRY
 from torch import nn
 
 
-def conv3x3(in_planes, out_planes, stride=1):
-    "3x3 convolution with padding"
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
-
-
 class BasicBlock(nn.Module):
     def __init__(self, cfg, inplanes, planes, stride=1, dilation=1):
         super(BasicBlock, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3,
-                               stride=stride, padding=dilation,
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride, padding=dilation,
                                bias=False, dilation=dilation)
-        self.bn1 = get_norm(cfg.MODEL.DLA.NORM, planes)
+        self.bn1 = get_norm(cfg.CENTER_MASK.NORM, planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
-                               stride=1, padding=dilation,
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=dilation,
                                bias=False, dilation=dilation)
-        self.bn2 = get_norm(cfg.MODEL.DLA.NORM, planes)
+        self.bn2 = get_norm(cfg.CENTER_MASK.NORM, planes)
         self.stride = stride
 
     def forward(self, x, residual=None):
@@ -38,91 +29,6 @@ class BasicBlock(nn.Module):
 
         out = self.conv2(out)
         out = self.bn2(out)
-
-        out += residual
-        out = self.relu(out)
-
-        return out
-
-
-class Bottleneck(nn.Module):
-    expansion = 2
-
-    def __init__(self, cfg, inplanes, planes, stride=1, dilation=1):
-        super(Bottleneck, self).__init__()
-        expansion = Bottleneck.expansion
-        bottle_planes = planes // expansion
-        self.conv1 = nn.Conv2d(inplanes, bottle_planes,
-                               kernel_size=1, bias=False)
-        self.bn1 = get_norm(cfg.MODEL.DLA.NORM, planes)
-        self.conv2 = nn.Conv2d(bottle_planes, bottle_planes, kernel_size=3,
-                               stride=stride, padding=dilation,
-                               bias=False, dilation=dilation)
-        self.bn2 = get_norm(cfg.MODEL.DLA.NORM, planes)
-        self.conv3 = nn.Conv2d(bottle_planes, planes,
-                               kernel_size=1, bias=False)
-        self.bn3 = get_norm(cfg.MODEL.DLA.NORM, planes)
-        self.relu = nn.ReLU(inplace=True)
-        self.stride = stride
-
-    def forward(self, x, residual=None):
-        if residual is None:
-            residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        out += residual
-        out = self.relu(out)
-
-        return out
-
-
-class BottleneckX(nn.Module):
-    expansion = 2
-    cardinality = 32
-
-    def __init__(self, cfg, inplanes, planes, stride=1, dilation=1):
-        super(BottleneckX, self).__init__()
-        cardinality = BottleneckX.cardinality
-        # dim = int(math.floor(planes * (BottleneckV5.expansion / 64.0)))
-        # bottle_planes = dim * cardinality
-        bottle_planes = planes * cardinality // 32
-        self.conv1 = nn.Conv2d(inplanes, bottle_planes,
-                               kernel_size=1, bias=False)
-        self.bn1 = get_norm(cfg.MODEL.DLA.NORM, planes)
-        self.conv2 = nn.Conv2d(bottle_planes, bottle_planes, kernel_size=3,
-                               stride=stride, padding=dilation, bias=False,
-                               dilation=dilation, groups=cardinality)
-        self.bn2 = get_norm(cfg.MODEL.DLA.NORM, planes)
-        self.conv3 = nn.Conv2d(bottle_planes, planes,
-                               kernel_size=1, bias=False)
-        self.bn3 = get_norm(cfg.MODEL.DLA.NORM, planes)
-        self.relu = nn.ReLU(inplace=True)
-        self.stride = stride
-
-    def forward(self, x, residual=None):
-        if residual is None:
-            residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
 
         out += residual
         out = self.relu(out)
@@ -133,10 +39,9 @@ class BottleneckX(nn.Module):
 class Root(nn.Module):
     def __init__(self, cfg, in_channels, out_channels, kernel_size, residual):
         super(Root, self).__init__()
-        self.conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size,
-            stride=1, bias=False, padding=(kernel_size - 1) // 2)
-        self.bn = get_norm(cfg.MODEL.DLA.NORM, out_channels)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, bias=False,
+                              padding=(kernel_size - 1) // 2)
+        self.bn = get_norm(cfg.CENTER_MASK.NORM, out_channels)
         self.relu = nn.ReLU(inplace=True)
         self.residual = residual
 
@@ -161,10 +66,8 @@ class Tree(nn.Module):
         if level_root:
             root_dim += in_channels
         if levels == 1:
-            self.tree1 = block(cfg, in_channels, out_channels, stride,
-                               dilation=dilation)
-            self.tree2 = block(cfg, out_channels, out_channels, 1,
-                               dilation=dilation)
+            self.tree1 = block(cfg, in_channels, out_channels, stride, dilation=dilation)
+            self.tree2 = block(cfg, out_channels, out_channels, 1, dilation=dilation)
         else:
             self.tree1 = Tree(cfg, levels - 1, block, in_channels, out_channels,
                               stride, root_dim=0,
@@ -188,7 +91,7 @@ class Tree(nn.Module):
             self.project = nn.Sequential(
                 nn.Conv2d(in_channels, out_channels,
                           kernel_size=1, stride=1, bias=False),
-                get_norm(cfg.MODEL.DLA.NORM, out_channels)
+                get_norm(cfg.CENTER_MASK.NORM, out_channels)
             )
 
     def forward(self, x, residual=None, children=None):
@@ -220,17 +123,13 @@ class DLA(Backbone):
         self._out_feature_strides = {k: 2 ** i for i, k in enumerate(self._out_features)}
 
         self.base_layer = nn.Sequential(
-            nn.Conv2d(3, channels[0], kernel_size=7, stride=1,
-                      padding=3, bias=False),
-            get_norm(cfg.MODEL.DLA.NORM, channels[0]),
+            nn.Conv2d(3, channels[0], kernel_size=7, stride=1, padding=3, bias=False),
+            get_norm(cfg.CENTER_MASK.NORM, channels[0]),
             nn.ReLU(inplace=True))
-        self.level0 = self._make_conv_level(
-            channels[0], channels[0], levels[0])
-        self.level1 = self._make_conv_level(
-            channels[0], channels[1], levels[1], stride=2)
+        self.level0 = self._make_conv_level(channels[0], channels[0], levels[0])
+        self.level1 = self._make_conv_level(channels[0], channels[1], levels[1], stride=2)
         self.level2 = Tree(cfg, levels[2], block, channels[1], channels[2], 2,
-                           level_root=False,
-                           root_residual=residual_root)
+                           level_root=False, root_residual=residual_root)
         self.level3 = Tree(cfg, levels[3], block, channels[2], channels[3], 2,
                            level_root=True, root_residual=residual_root)
         self.level4 = Tree(cfg, levels[4], block, channels[3], channels[4], 2,
@@ -238,31 +137,10 @@ class DLA(Backbone):
         self.level5 = Tree(cfg, levels[5], block, channels[4], channels[5], 2,
                            level_root=True, root_residual=residual_root)
 
-        # self.avgpool = nn.AvgPool2d(pool_size)
-        # self.fc = nn.Conv2d(channels[-1], num_classes, kernel_size=1,
-        #                     stride=1, padding=0, bias=True)
-
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
-
-    def _make_level(self, block, inplanes, planes, blocks, stride=1):
-        downsample = None
-        if stride != 1 or inplanes != planes:
-            downsample = nn.Sequential(
-                nn.MaxPool2d(stride, stride=stride),
-                nn.Conv2d(inplanes, planes,
-                          kernel_size=1, stride=1, bias=False),
-                get_norm(self.cfg.MODEL.DLA.NORM, planes),
-            )
-
-        layers = []
-        layers.append(block(inplanes, planes, stride, downsample=downsample))
-        for i in range(1, blocks):
-            layers.append(block(inplanes, planes))
-
-        return nn.Sequential(*layers)
 
     def _make_conv_level(self, inplanes, planes, convs, stride=1, dilation=1):
         modules = []
@@ -271,14 +149,14 @@ class DLA(Backbone):
                 nn.Conv2d(inplanes, planes, kernel_size=3,
                           stride=stride if i == 0 else 1,
                           padding=dilation, bias=False, dilation=dilation),
-                get_norm(self.cfg.MODEL.DLA.NORM, planes),
+                get_norm(self.cfg.CENTER_MASK.NORM, planes),
                 nn.ReLU(inplace=True)])
             inplanes = planes
         return nn.Sequential(*modules)
 
     def forward(self, x):
-        y = {}
         x = self.base_layer(x)
+        y = {}
         for i in range(6):
             name = 'level{}'.format(i)
             x = getattr(self, name)(x)
@@ -286,34 +164,7 @@ class DLA(Backbone):
         return y
 
 
-def dla34(cfg, pretrained=None, **kwargs):  # DLA-34
-    model = DLA(cfg, [1, 1, 1, 2, 2, 1],
-                [16, 32, 64, 128, 256, 512],
-                block=BasicBlock, **kwargs)
-    if pretrained is not None:
-        model.load_pretrained_model(pretrained, 'dla34')
-    return model
-
-
-def dla60(cfg, pretrained=None, **kwargs):  # DLA-60
-    Bottleneck.expansion = 2
-    model = DLA(cfg, [1, 1, 1, 2, 3, 1],
-                [16, 32, 128, 256, 512, 1024],
-                block=Bottleneck, **kwargs)
-    if pretrained is not None:
-        model.load_pretrained_model(pretrained, 'dla60')
-    return model
-
-
 @BACKBONE_REGISTRY.register()
-def build_dla_backbone(cfg, input_shape: ShapeSpec):
-    """
-    Args:
-        cfg: a detectron2 CfgNode
-    Returns:
-        backbone (Backbone): backbone module, must be a subclass of :class:`Backbone`.
-    """
-    assert cfg.MODEL.BACKBONE.FREEZE_AT == -1, "Freezing layers does not be supported for DLA"
-
-    depth_to_creator = {"DLA34": dla34}
-    return depth_to_creator[cfg.MODEL.DLA.CONV_BODY](cfg)
+def dla34(cfg, **kwargs):
+    model = DLA(cfg, [1, 1, 1, 2, 2, 1], [16, 32, 64, 128, 256, 512], block=BasicBlock, **kwargs)
+    return model
