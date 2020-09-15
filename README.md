@@ -55,8 +55,7 @@ python visualize.py --input output/dla34_out.json --output results --dataset coc
 There are some difference between this implementation and official implementation:
 1. Not support the `Hourglass-104` backbone;
 2. `SGD` optimizer is used to replace the `Adam` optimizer;
-3. The `label embedding` of `semantic relation network` is obtained by `mean` of two word embeddings
- of some class labels, such as `traffic light`. 
+3. The training images are not cropped to `512x512`, instead using the default resize strategy. 
 
 <table>
 	<tbody>

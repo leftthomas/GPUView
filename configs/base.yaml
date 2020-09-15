@@ -3,12 +3,6 @@ MODEL:
   MASK_ON: True
   PIXEL_MEAN: [ 0.408, 0.447, 0.470 ]
   PIXEL_STD: [ 0.289, 0.274, 0.278 ]
-INPUT:
-  CROP:
-    ENABLED: True
-    TYPE: "absolute"
-    SIZE: [ 512, 512 ]
-  MASK_FORMAT: "bitmask"
 DATASETS:
   TRAIN: ("coco_2014_train", "coco_2014_val")
   TEST: ("coco_2014_minival",)
