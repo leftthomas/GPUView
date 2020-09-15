@@ -1,145 +1,77 @@
 import math
 
-import torch
-from detectron2.data import DatasetCatalog, MetadataCatalog
-from detectron2.modeling.roi_heads.roi_heads import ROI_HEADS_REGISTRY, Res5ROIHeads
+import numpy as np
+from detectron2.layers import DeformConv
 from torch import nn
 
 
-class GraphConvolution(nn.Module):
-    def __init__(self, in_features, out_features, bias=True):
-        super(GraphConvolution, self).__init__()
-        self.in_features = in_features
-        self.out_features = out_features
-        self.weight = nn.Parameter(torch.Tensor(in_features, out_features))
-        if bias:
-            self.bias = nn.Parameter(torch.Tensor(out_features))
-        else:
-            self.register_parameter('bias', None)
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        stdv = 1. / math.sqrt(self.weight.size(1))
-        self.weight.data.uniform_(-stdv, stdv)
-        if self.bias is not None:
-            self.bias.data.uniform_(-stdv, stdv)
-
-    def forward(self, input, adj):
-        support = torch.mm(input, self.weight)
-        output = torch.mm(adj, support)
-        if self.bias is not None:
-            return output + self.bias
-        else:
-            return output
-
-    def __repr__(self):
-        return self.__class__.__name__ + ' (' + str(self.in_features) + ' -> ' + str(self.out_features) + ')'
+def fill_up_weights(up):
+    w = up.weight.data
+    f = math.ceil(w.size(2) / 2)
+    c = (2 * f - 1 - f % 2) / (2. * f)
+    for i in range(w.size(2)):
+        for j in range(w.size(3)):
+            w[0, 0, i, j] = (1 - math.fabs(i / f - c)) * (1 - math.fabs(j / f - c))
+    for c in range(1, w.size(0)):
+        w[c, 0, :, :] = w[0, 0, :, :]
 
 
-class SemanticRelation(nn.Module):
-    def __init__(self, cfg, dimension):
-        super().__init__()
-        self.eta = cfg.MODEL.SEMANTIC_RELATION.ETA
-        self.gamma = cfg.MODEL.SEMANTIC_RELATION.GAMMA
-        self.tau = cfg.MODEL.SEMANTIC_RELATION.TAU
+class DeformConvV2(nn.Module):
+    def __init__(self, chi, cho):
+        super(DeformConvV2, self).__init__()
+        self.actf = nn.Sequential(nn.BatchNorm2d(cho), nn.ReLU(inplace=True))
+        self.conv = DeformConv(chi, cho, kernel_size=(3, 3), stride=1, padding=1, dilation=1, deformable_groups=1)
+        nn.init.uniform_(self.actf[0].weight.data)
 
-        categories = MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes
-        # generate A
-        Y = torch.zeros((len(categories), len(categories)))
-        Z = torch.zeros(len(categories))
-        for dataset in cfg.DATASETS.TRAIN:
-            for data in DatasetCatalog.get(dataset):
-                # for each image to calculate the number of occurrences of label and pairs
-                labels = set()
-                for annotation in data['annotations']:
-                    labels.add(annotation['category_id'])
-                labels = list(labels)
-                Z[labels] += 1
-                for i in range(len(labels)):
-                    for j in range(i + 1, len(labels)):
-                        Y[labels[i], labels[j]] += 1
-                        Y[labels[j], labels[i]] += 1
-        A = Y / Z.unsqueeze(dim=-1)
-        A.fill_diagonal_(1.0)
-        A[A >= self.eta] = 1.0
-        A[A < self.eta] = 0.0
-        A.fill_diagonal_(0.0)
-        A /= torch.sum(A, dim=-1, keepdim=True)
-        A[torch.isnan(A)] = 0.0
-        A.fill_diagonal_(1.0 - self.gamma)
-        self.A = A.to(cfg.MODEL.DEVICE)
-        # init vocabs
-        vocabs = GloVe(name='6B')
-        self.word_embedding = []
-        # process missing words
-        for category in categories:
-            if ' ' in category:
-                tokens = category.split(' ')
-            else:
-                if category == 'diningtable':
-                    tokens = ['dining', 'table']
-                elif category == 'pottedplant':
-                    tokens = ['potted', 'plant']
-                elif category == 'tvmonitor':
-                    tokens = ['tv', 'monitor']
-                else:
-                    tokens = category
-            embeddings = vocabs.get_vecs_by_tokens(tokens)
-            if embeddings.size(0) == 2:
-                embeddings = embeddings.mean(dim=0)
-            self.word_embedding.append(embeddings)
-        self.word_embedding = torch.stack(self.word_embedding, dim=0).to(cfg.MODEL.DEVICE)
-
-        self.conv1 = GraphConvolution(self.word_embedding.size(-1), self.word_embedding.size(-1))
-        self.conv2 = GraphConvolution(self.word_embedding.size(-1), dimension)
-        self.fc1 = nn.Linear(self.word_embedding.size(0), int(dimension * self.tau))
-        self.fc2 = nn.Linear(int(dimension * self.tau) + dimension, dimension)
-        self.relu = nn.LeakyReLU()
-
-    def forward(self, features):
-        x = self.relu(self.conv1(self.word_embedding, self.A))
-        x = self.relu(self.conv2(x, self.A))
-        x = self.fc1(torch.relu(torch.mm(features, x.t())))
-        x = torch.relu(self.fc2(torch.cat((x, features), dim=-1)))
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.actf(x)
         return x
 
 
-@ROI_HEADS_REGISTRY.register()
-class RelationROIHeads(Res5ROIHeads):
-    """
-    The RelationROIHeads in a typical "C4" R-CNN model, where
-    the box head uses the cropping and the per-region feature computation by a Res5 block.
-    """
+class IDAUp(nn.Module):
+    def __init__(self, o, channels, up_f):
+        super(IDAUp, self).__init__()
+        for i in range(1, len(channels)):
+            c = channels[i]
+            f = int(up_f[i])
+            proj = DeformConvV2(c, o)
+            node = DeformConvV2(o, o)
+            up = nn.ConvTranspose2d(o, o, f * 2, stride=f, padding=f // 2, output_padding=0, groups=o, bias=False)
+            fill_up_weights(up)
 
-    def __init__(self, cfg, input_shape):
-        super().__init__(cfg, input_shape)
-        self.semantic_relation = SemanticRelation(cfg, cfg.MODEL.RESNETS.RES2_OUT_CHANNELS * 8)
+            setattr(self, 'proj_' + str(i), proj)
+            setattr(self, 'up_' + str(i), up)
+            setattr(self, 'node_' + str(i), node)
 
-    def forward(self, images, features, proposals, targets=None):
-        """
-        See :meth:`ROIHeads.forward`.
-        """
-        del images
+    def forward(self, layers, startp, endp):
+        for i in range(startp + 1, endp):
+            upsample = getattr(self, 'up_' + str(i - startp))
+            project = getattr(self, 'proj_' + str(i - startp))
+            layers[i] = upsample(project(layers[i]))
+            node = getattr(self, 'node_' + str(i - startp))
+            layers[i] = node(layers[i] + layers[i - 1])
 
-        if self.training:
-            assert targets
-            proposals = self.label_and_sample_proposals(proposals, targets)
-        del targets
 
-        proposal_boxes = [x.proposal_boxes for x in proposals]
-        box_features = self._shared_roi_transform(
-            [features[f] for f in self.in_features], proposal_boxes
-        )
-        box_features = box_features.mean(dim=[2, 3])
-        # obtain relations
-        semantic_features = self.semantic_relation(box_features)
-        predictions = self.box_predictor(semantic_features)
+class DLAUp(nn.Module):
+    def __init__(self, startp, channels, scales, in_channels=None):
+        super(DLAUp, self).__init__()
+        self.startp = startp
+        if in_channels is None:
+            in_channels = channels
+        self.channels = channels
+        channels = list(channels)
+        scales = np.array(scales, dtype=int)
+        for i in range(len(channels) - 1):
+            j = -i - 2
+            setattr(self, 'ida_{}'.format(i), IDAUp(channels[j], in_channels[j:], scales[j:] // scales[j]))
+            scales[j + 1:] = scales[j]
+            in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
-        if self.training:
-            del features
-            losses = self.box_predictor.losses(predictions, proposals)
-            return [], losses
-        else:
-            pred_instances, _ = self.box_predictor.inference(predictions, proposals)
-            pred_instances = self.forward_with_given_boxes(features, pred_instances)
-            return pred_instances, {}
+    def forward(self, layers):
+        out = [layers[-1]]
+        for i in range(len(layers) - self.startp - 1):
+            ida = getattr(self, 'ida_{}'.format(i))
+            ida(layers, len(layers) - i - 2, len(layers))
+            out.insert(0, layers[-1])
+        return out
