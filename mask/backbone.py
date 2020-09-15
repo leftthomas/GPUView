@@ -155,11 +155,10 @@ class DLA(Backbone):
 
     def forward(self, x):
         x = self.base_layer(x)
-        y = {}
+        y = []
         for i in range(6):
-            name = 'level{}'.format(i)
-            x = getattr(self, name)(x)
-            y[name] = x
+            x = getattr(self, 'level{}'.format(i))(x)
+            y.append(x)
         return y
 
 

@@ -1,7 +1,6 @@
 import math
 
 import numpy as np
-from detectron2.layers import DeformConv
 from torch import nn
 
 
@@ -16,11 +15,11 @@ def fill_up_weights(up):
         w[c, 0, :, :] = w[0, 0, :, :]
 
 
-class DeformConvV2(nn.Module):
+class DeformConv(nn.Module):
     def __init__(self, chi, cho):
-        super(DeformConvV2, self).__init__()
+        super(DeformConv, self).__init__()
         self.actf = nn.Sequential(nn.BatchNorm2d(cho), nn.ReLU(inplace=True))
-        self.conv = DeformConv(chi, cho, kernel_size=(3, 3), stride=1, padding=1, dilation=1, deformable_groups=1)
+        self.conv = nn.Conv2d(chi, cho, kernel_size=(3, 3), stride=1, padding=1, dilation=1)
         nn.init.uniform_(self.actf[0].weight.data)
 
     def forward(self, x):
@@ -35,8 +34,8 @@ class IDAUp(nn.Module):
         for i in range(1, len(channels)):
             c = channels[i]
             f = int(up_f[i])
-            proj = DeformConvV2(c, o)
-            node = DeformConvV2(o, o)
+            proj = DeformConv(c, o)
+            node = DeformConv(o, o)
             up = nn.ConvTranspose2d(o, o, f * 2, stride=f, padding=f // 2, output_padding=0, groups=o, bias=False)
             fill_up_weights(up)
 

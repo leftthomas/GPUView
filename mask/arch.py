@@ -47,8 +47,8 @@ class CenterMask(nn.Module):
                             [2 ** i for i in range(self.last_level - self.first_level)])
 
         # heads
-        for head_name, num_channel in [('saliency', self.num_classes), ('shape', self.s ** 2), ('size', 2),
-                                       ('heatmap', self.num_classes), ('offset', 2)]:
+        self.head_names = ['saliency', 'shape', 'size', 'heatmap', 'offset']
+        for head_name, num_channel in zip(self.head_names, [self.num_classes, self.s ** 2, 2, self.num_classes, 2]):
             fc = nn.Sequential(
                 nn.Conv2d(out_channel, self.head_conv, kernel_size=3, padding=1, bias=True),
                 nn.ReLU(inplace=True),
@@ -71,16 +71,13 @@ class CenterMask(nn.Module):
         self.ida_up(y, 0, len(y))
 
         z = {}
-        for head in self.heads:
-            if head.lower() == 'hm':
-                head_output = torch.clamp(
-                    self.__getattr__(head.lower())(y[-1]).sigmoid_(),
-                    min=1e-4,
-                    max=1 - 1e-4
-                )
-                z[head.lower()] = head_output
+        for head_name in self.head_names:
+            if head_name == 'heatmap':
+                head_output = torch.clamp(torch.sigmoid(getattr(self, '{}_head'.format(head_name))(y[-1])), min=1e-4,
+                                          max=1 - 1e-4)
+                z[head_name] = head_output
             else:
-                z[head.lower()] = self.__getattr__(head.lower())(y[-1])
+                z[head_name] = getattr(self, '{}_head'.format(head_name))(y[-1])
 
         results, losses = self.sem_seg_head(features, size, targets)
         if self.training:
