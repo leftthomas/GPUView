@@ -1,8 +1,8 @@
 MODEL:
   META_ARCHITECTURE: "CenterMask"
   MASK_ON: True
-  PIXEL_MEAN: [ 0.408, 0.447, 0.470 ]
-  PIXEL_STD: [ 0.289, 0.274, 0.278 ]
+  PIXEL_MEAN: [ 0.408, 0.448, 0.471 ]
+  PIXEL_STD: [ 0.242, 0.239, 0.234 ]
 DATASETS:
   TRAIN: ("coco_2014_train", "coco_2014_val")
   TEST: ("coco_2014_minival",)
