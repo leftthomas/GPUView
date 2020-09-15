@@ -7,6 +7,7 @@ from detectron2.structures import ImageList
 from torch import nn
 
 from .head import IDAUp, DLAUp
+from .utils import gen_heatmap
 
 
 @META_ARCH_REGISTRY.register()
@@ -61,21 +62,27 @@ class CenterMask(nn.Module):
         return self.pixel_mean.device
 
     def forward(self, batched_inputs):
-        images = [x["image"].to(self.device) for x in batched_inputs]
-        images = [self.normalizer(x) for x in images]
-        images = ImageList.from_tensors(images, self.backbone.size_divisibility)
-        size = images.tensor.size()[-2:]
-        features = self.backbone(images.tensor)
+        images, instances = self.preprocess_image(batched_inputs)
+        x = self.backbone(images.tensor)
+        x = self.dla_up(x)
+        y = []
+        for i in range(self.last_level - self.first_level):
+            y.append(x[i].clone())
+        self.ida_up(y, 0, len(y))
 
-        if "sem_seg" in batched_inputs[0]:
-            targets = [x["sem_seg"].to(self.device) for x in batched_inputs]
-            targets = ImageList.from_tensors(
-                targets, self.backbone.size_divisibility, self.sem_seg_head.ignore_value
-            ).tensor
-        else:
-            targets = None
+        z = {}
+        for head in self.heads:
+            if head.lower() == 'hm':
+                head_output = torch.clamp(
+                    self.__getattr__(head.lower())(y[-1]).sigmoid_(),
+                    min=1e-4,
+                    max=1 - 1e-4
+                )
+                z[head.lower()] = head_output
+            else:
+                z[head.lower()] = self.__getattr__(head.lower())(y[-1])
+
         results, losses = self.sem_seg_head(features, size, targets)
-
         if self.training:
             return losses
 
@@ -86,3 +93,19 @@ class CenterMask(nn.Module):
             r = sem_seg_postprocess(result, image_size, height, width)
             processed_results.append({"sem_seg": r})
         return processed_results
+
+    def preprocess_image(self, batched_inputs):
+        images = [x["image"].to(self.device) / 255.0 for x in batched_inputs]
+        if self.training:
+            instances = [x["instances"].to(self.device) for x in batched_inputs]
+        else:
+            instances = []
+
+        images = [(x - self.pixel_mean) / self.pixel_std for x in images]
+        images = ImageList.from_tensors(images, 32)
+        input_shape = np.array(images.tensor.shape[2:])
+        output_shape = input_shape // self.down_ratio
+        if not self.training:
+            return images, []
+        instances = [gen_heatmap(x, output_shape, self.num_classes) for x in instances]
+        return images, instances
