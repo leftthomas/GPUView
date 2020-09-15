@@ -2,6 +2,4 @@ _BASE_: "base.yaml"
 MODEL:
   BACKBONE:
     NAME: "dla34"
-  ROI_HEADS:
-    NUM_CLASSES: 80
-OUTPUT_DIR: "./output/faster_coco"
+OUTPUT_DIR: "./output/dla34"

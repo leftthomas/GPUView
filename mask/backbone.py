@@ -12,11 +12,11 @@ class BasicBlock(nn.Module):
         super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride, padding=dilation,
                                bias=False, dilation=dilation)
-        self.bn1 = get_norm(cfg.CENTER_MASK.NORM, planes)
+        self.bn1 = get_norm(cfg.MODEL.CENTER_MASK.NORM, planes)
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=dilation,
                                bias=False, dilation=dilation)
-        self.bn2 = get_norm(cfg.CENTER_MASK.NORM, planes)
+        self.bn2 = get_norm(cfg.MODEL.CENTER_MASK.NORM, planes)
         self.stride = stride
 
     def forward(self, x, residual=None):
@@ -41,7 +41,7 @@ class Root(nn.Module):
         super(Root, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, bias=False,
                               padding=(kernel_size - 1) // 2)
-        self.bn = get_norm(cfg.CENTER_MASK.NORM, out_channels)
+        self.bn = get_norm(cfg.MODEL.CENTER_MASK.NORM, out_channels)
         self.relu = nn.ReLU(inplace=True)
         self.residual = residual
 
@@ -78,8 +78,7 @@ class Tree(nn.Module):
                               root_kernel_size=root_kernel_size,
                               dilation=dilation, root_residual=root_residual)
         if levels == 1:
-            self.root = Root(cfg, root_dim, out_channels, root_kernel_size,
-                             root_residual)
+            self.root = Root(cfg, root_dim, out_channels, root_kernel_size, root_residual)
         self.level_root = level_root
         self.root_dim = root_dim
         self.downsample = None
@@ -91,7 +90,7 @@ class Tree(nn.Module):
             self.project = nn.Sequential(
                 nn.Conv2d(in_channels, out_channels,
                           kernel_size=1, stride=1, bias=False),
-                get_norm(cfg.CENTER_MASK.NORM, out_channels)
+                get_norm(cfg.MODEL.CENTER_MASK.NORM, out_channels)
             )
 
     def forward(self, x, residual=None, children=None):
@@ -124,7 +123,7 @@ class DLA(Backbone):
 
         self.base_layer = nn.Sequential(
             nn.Conv2d(3, channels[0], kernel_size=7, stride=1, padding=3, bias=False),
-            get_norm(cfg.CENTER_MASK.NORM, channels[0]),
+            get_norm(cfg.MODEL.CENTER_MASK.NORM, channels[0]),
             nn.ReLU(inplace=True))
         self.level0 = self._make_conv_level(channels[0], channels[0], levels[0])
         self.level1 = self._make_conv_level(channels[0], channels[1], levels[1], stride=2)
@@ -149,7 +148,7 @@ class DLA(Backbone):
                 nn.Conv2d(inplanes, planes, kernel_size=3,
                           stride=stride if i == 0 else 1,
                           padding=dilation, bias=False, dilation=dilation),
-                get_norm(self.cfg.CENTER_MASK.NORM, planes),
+                get_norm(self.cfg.MODEL.CENTER_MASK.NORM, planes),
                 nn.ReLU(inplace=True)])
             inplanes = planes
         return nn.Sequential(*modules)
@@ -165,6 +164,6 @@ class DLA(Backbone):
 
 
 @BACKBONE_REGISTRY.register()
-def dla34(cfg, **kwargs):
-    model = DLA(cfg, [1, 1, 1, 2, 2, 1], [16, 32, 64, 128, 256, 512], block=BasicBlock, **kwargs)
+def dla34(cfg, input_shape):
+    model = DLA(cfg, [1, 1, 1, 2, 2, 1], [16, 32, 64, 128, 256, 512], block=BasicBlock)
     return model

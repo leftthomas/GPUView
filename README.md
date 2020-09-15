@@ -17,9 +17,13 @@ pip install git+https://github.com/facebookresearch/detectron2.git@master
 ```
 pip install opencv-python
 ```
+- shapely
+```
+pip install shapely
+```
 
 ## Datasets
-`MS COCO 2017` dataset is used in this repo. The dataset is assumed to exist in a directory specified by the 
+`MS COCO` dataset is used in this repo. The dataset is assumed to exist in a directory specified by the 
 environment variable `DETECTRON2_DATASETS`. You can set the location for this dataset by 
 `export DETECTRON2_DATASETS=/path/to/datasets`. The dataset structure should be organized as 
 [this](https://github.com/facebookresearch/detectron2/tree/master/datasets) described.
@@ -44,13 +48,13 @@ python train_net.py --config-file configs/dla34.yaml --num-gpus 8 --eval-only MO
 ## Visualization
 Visualize model output can be done like this:
 ```bash
-python visualize.py --input output/dla34_out.json --output results --dataset coco_2017_minival
+python visualize.py --input output/dla34_out.json --output results --dataset coco_2014_minival
 ```
 
 ## Results
 There are some difference between this implementation and official implementation:
 1. Not support the `Hourglass-104` backbone;
-2. The training step is `270,000` for `coco` dataset and `18,000` for `voc` dataset;
+2. `SGD` optimizer is used to replace the `Adam` optimizer;
 3. The `label embedding` of `semantic relation network` is obtained by `mean` of two word embeddings
  of some class labels, such as `traffic light`. 
 

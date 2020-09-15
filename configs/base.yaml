@@ -8,14 +8,15 @@ INPUT:
     ENABLED: True
     TYPE: "absolute"
     SIZE: [ 512, 512 ]
+  MASK_FORMAT: "bitmask"
 DATASETS:
   TRAIN: ("coco_2014_train", "coco_2014_val")
   TEST: ("coco_2014_minival",)
 SOLVER:
-  IMS_PER_BATCH: 8
+  IMS_PER_BATCH: 128
   BASE_LR: 2.5e-4
-  STEPS: (210000, 250000)
-  MAX_ITER: 270000
+  STEPS: (95500, 114600)
+  MAX_ITER: 124150
 #TEST:
 #  EVAL_PERIOD: 1
 VERSION: 2
