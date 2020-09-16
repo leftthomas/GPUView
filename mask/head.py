@@ -1,7 +1,9 @@
 import math
 
 import numpy as np
+import torch
 from torch import nn
+from torch.nn import functional as F
 
 
 def fill_up_weights(up):
@@ -74,3 +76,45 @@ class DLAUp(nn.Module):
             ida(layers, len(layers) - i - 2, len(layers))
             out.insert(0, layers[-1])
         return out
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha, beta):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+
+    def forward(self, out, target):
+        pos_indexes = target.eq(1).float()
+        neg_indexes = target.lt(1).float()
+        pos_weights = torch.pow(1 - out, self.alpha)
+        neg_weights = torch.pow(1 - target, self.beta)
+
+        pos_loss = (pos_weights * torch.log(out) * pos_indexes).sum()
+        neg_loss = (neg_weights * torch.pow(out, self.alpha) * torch.log(1 - out) * neg_indexes).sum()
+
+        num_pos, loss = pos_indexes.sum(), 0
+        if num_pos == 0:
+            loss = loss - neg_loss
+        else:
+            loss = loss - (pos_loss + neg_loss) / num_pos
+        return loss
+
+
+class L1Loss(nn.Module):
+    def __init__(self):
+        super(L1Loss, self).__init__()
+
+    def forward(self, output, mask, ind, target):
+        pred = _transpose_and_gather_feat(output, ind)
+        mask = mask.unsqueeze(2).expand_as(pred).float()
+        loss = F.l1_loss(pred * mask, target * mask, reduction='sum')
+        loss = loss / (mask.sum() + 1e-4)
+        return loss
+
+
+def _transpose_and_gather_feat(feat, ind):
+    feat = feat.permute(0, 2, 3, 1).contiguous()
+    feat = feat.view(feat.size(0), -1, feat.size(3))
+    feat = _gather_feat(feat, ind)
+    return feat

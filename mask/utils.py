@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import torch
 
@@ -58,39 +60,39 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
     return heatmap
 
 
-def gen_heatmap(instances, output_shape, num_classes):
+def gen_heatmap(instances, output_shape, num_classes, down_ratio):
     """
-    Generate heatmap for centernet or cornernet, which use heatmap as backbone.
+    Generate heatmap for centermask, which use heatmap as backbone.
     :param instances: instances that used in detectron2
-    :param output_shape: output of the model, say centernet is input / 4
+    :param output_shape: output of the model, say centermask is input / down_ratio
     :param num_classes: dataset num_classes
+    :param down_ratio: down_ratio
     :return:
     """
-    hm = np.zeros((num_classes, output_shape[0], output_shape[1]),
-                  dtype=np.float32)
-    wh = np.zeros((128, 2), dtype=np.float32)
+    heatmap = np.zeros((num_classes, output_shape[0], output_shape[1]), dtype=np.float32)
+    wh_offset = np.zeros((128, 2), dtype=np.float32)
+    wh_map = np.zeros((128, 2), dtype=np.float32)
     reg_mask = np.zeros(128, dtype=np.uint8)
-    reg = np.zeros((128, 2), dtype=np.float32)
     ind = np.zeros(128, dtype=np.int64)
     num_objs = instances.gt_classes.shape[0]
     num_objs = min(num_objs, 128)
+
     for k in range(num_objs):
-        bbox = instances.gt_boxes.tensor[k] / 4
-        cls_id = instances.gt_classes[k]
+        bbox = instances.gt_boxes.tensor[k] / down_ratio
+        class_id = instances.gt_classes[k]
         h, w = bbox[3] - bbox[1], bbox[2] - bbox[0]
         if h > 0 and w > 0:
-            import math
             radius = gaussian_radius((math.ceil(h), math.ceil(w)))
             radius = max(0, int(radius))
-            ct = np.array(
-                [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], dtype=np.float32)
+            ct = np.array([(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], dtype=np.float32)
             ct_int = ct.astype(np.int32)
-            draw_umich_gaussian(hm[cls_id], ct_int, radius)
-            wh[k] = 1. * w, 1. * h
-            ind[k] = ct_int[1] * output_shape[1] + ct_int[0]
-            reg[k] = ct - ct_int
+            draw_umich_gaussian(heatmap[class_id], ct_int, radius)
+            wh_offset[k] = ct - ct_int
+            wh_map[k] = w, h
             reg_mask[k] = 1
-    instance_dict = {'hm': torch.tensor(hm), 'reg_mask': torch.tensor(reg_mask), 'ind': torch.tensor(ind),
-                     'wh': torch.tensor(wh), 'reg': torch.tensor(reg)}
+            ind[k] = ct_int[1] * output_shape[1] + ct_int[0]
+    instance_dict = {'heatmap': torch.tensor(heatmap), 'wh_offset': torch.tensor(wh_offset),
+                     'wh_map': torch.tensor(wh_map), 'reg_mask': torch.tensor(reg_mask),
+                     'ind': torch.tensor(ind)}
 
     return instance_dict
