@@ -5,7 +5,7 @@ from detectron2.modeling.meta_arch.build import META_ARCH_REGISTRY
 from detectron2.structures import ImageList
 from torch import nn
 
-from .head import IDAUp, DLAUp, FocalLoss, L1Loss
+from .head import IDAUp, DLAUp, FocalLoss, L1Loss, MaskLoss
 from .utils import gen_heatmap
 
 
@@ -59,6 +59,7 @@ class CenterMask(nn.Module):
         # losses
         self.focal_loss = FocalLoss(self.focal_alpha, self.focal_beta)
         self.l1_loss = L1Loss()
+        self.mask_loss = MaskLoss()
 
     @property
     def device(self):
@@ -75,7 +76,7 @@ class CenterMask(nn.Module):
 
         z = {}
         for head_name in self.head_names:
-            if head_name == 'heatmap':
+            if head_name in ['saliency', 'shape', 'heatmap']:
                 head_output = torch.sigmoid(getattr(self, '{}_head'.format(head_name))(y[-1]))
                 z[head_name] = head_output
             else:
@@ -121,8 +122,9 @@ class CenterMask(nn.Module):
         gt_ind = torch.cat([x['ind'].unsqueeze(0).to(self.device) for x in instances], dim=0)
 
         heatmap_loss = self.focal_loss(outputs['heatmap'], gt_heatmap)
-        size_loss = self.l1_loss(outputs['size'], gt_size, gt_ind, gt_offset)
-        offset_loss = self.l1_loss(outputs['offset'], gt_size, gt_ind, gt_reg)
+        size_loss = self.l1_loss(outputs['size'], gt_reg, gt_ind, gt_size)
+        offset_loss = self.l1_loss(outputs['offset'], gt_reg, gt_ind, gt_offset)
+        mask_loss = self.mask_loss(outputs['shape'], outputs['size'], outputs['saliency'], gt_reg, gt_ind)
 
         return {
             "heatmap_loss": heatmap_loss * self.lambda_p,

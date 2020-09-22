@@ -70,6 +70,7 @@ def gen_heatmap(instances, output_shape, num_classes, down_ratio):
     :return:
     """
     heatmap = np.zeros((num_classes, output_shape[0], output_shape[1]), dtype=np.float32)
+    mask_map = np.zeros((num_classes, output_shape[0], output_shape[1]), dtype=np.float32)
     wh_offset = np.zeros((128, 2), dtype=np.float32)
     wh_map = np.zeros((128, 2), dtype=np.float32)
     reg_mask = np.zeros(128, dtype=np.uint8)
@@ -91,6 +92,7 @@ def gen_heatmap(instances, output_shape, num_classes, down_ratio):
             wh_map[k] = w, h
             reg_mask[k] = 1
             ind[k] = ct_int[1] * output_shape[1] + ct_int[0]
+            resized_mask = instances.gt_masks[k]
     instance_dict = {'heatmap': torch.tensor(heatmap), 'wh_offset': torch.tensor(wh_offset),
                      'wh_map': torch.tensor(wh_map), 'reg_mask': torch.tensor(reg_mask),
                      'ind': torch.tensor(ind)}
