@@ -1,5 +1,0 @@
-_BASE_: "base.yaml"
-MODEL:
-  BACKBONE:
-    NAME: "dla34"
-OUTPUT_DIR: "./output/dla34"
