@@ -107,19 +107,13 @@ class Backbone(nn.Module):
         # encoder
         self.f = nn.Sequential(*self.f)
         # projection head
-        self.g = nn.Sequential(nn.Linear(2048, 2048, bias=False), nn.BatchNorm1d(2048), nn.ReLU(inplace=True),
-                               nn.Linear(2048, 2048, bias=False), nn.BatchNorm1d(2048), nn.ReLU(inplace=True),
-                               nn.Linear(2048, 2048, bias=False), nn.BatchNorm1d(2048))
-        # prediction head
-        self.h = nn.Sequential(nn.Linear(2048, hidden_dim, bias=False), nn.BatchNorm1d(hidden_dim),
+        self.g = nn.Sequential(nn.Linear(2048, hidden_dim, bias=False), nn.BatchNorm1d(hidden_dim),
                                nn.ReLU(inplace=True), nn.Linear(hidden_dim, 2048, bias=True))
 
     def forward(self, x):
         x = self.f(x)
         feature = torch.flatten(x, start_dim=1)
-        if not self.pretrained:
-            feature = self.g(feature)
-        proj = self.h(feature)
+        proj = self.g(feature)
         return F.normalize(feature, dim=-1), F.normalize(proj, dim=-1)
 
 
