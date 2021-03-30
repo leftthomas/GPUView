@@ -26,7 +26,7 @@ train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_w
 val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=8)
 
 # model setup
-model = Backbone(hidden_dim, pretrained=method_name == 'pretrained').cuda()
+model = Backbone(hidden_dim).cuda()
 # optimizer config
 optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=1e-6)
 if method_name == 'npid':
@@ -49,63 +49,50 @@ if not os.path.exists(save_root):
 best_precise, total_loss, current_iter = 0.0, 0.0, 0
 epochs = (total_iter // (len(train_data) // batch_size)) + 1
 
-if method_name == 'pretrained':
-    current_iter += 1
-    results['train_loss'].append(total_loss / current_iter)
-    val_precise, features = val_contrast(model, val_loader, results, ranks, current_iter, total_iter)
-    # save statistics
-    data_frame = pd.DataFrame(data=results, index=range(1, current_iter + 1))
-    data_frame.to_csv('{}/{}_results.csv'.format(save_root, save_name_pre), index_label='iter')
-    torch.save(model.state_dict(), '{}/{}_model.pth'.format(save_root, save_name_pre))
-    torch.save(features, '{}/{}_vectors.pth'.format(save_root, save_name_pre))
-else:
-    # train loop
-    for epoch in range(1, epochs + 1):
-        model.train()
-        train_bar = tqdm(train_loader, dynamic_ncols=True)
-        for img_1, img_2, _, _, img_label, pos_index in train_bar:
-            img_1, img_2 = img_1.cuda(), img_2.cuda()
-            feature_1, proj_1 = model(img_1)
+# train loop
+for epoch in range(1, epochs + 1):
+    model.train()
+    train_bar = tqdm(train_loader, dynamic_ncols=True)
+    for img_1, img_2, _, _, img_label, pos_index in train_bar:
+        feature_1, proj_1 = model(img_1.cuda())
 
-            if method_name == 'npid':
-                loss, pos_samples = loss_criterion(proj_1, pos_index)
-            elif method_name == 'simclr':
-                feature_2, proj_2 = model(img_2)
-                loss = loss_criterion(proj_1, proj_2)
-            elif method_name == 'simsiam':
-                feature_2, proj_2 = model(img_2)
-                loss = loss_criterion(feature_1, feature_2, proj_1, proj_2)
-            elif method_name == 'proxyanchor':
-                loss = loss_criterion(proj_1, img_label)
-            else:
-                loss = loss_criterion(proj_1, img_label)
-            optimizer.zero_grad()
-            if method_name in ['proxyanchor', 'softtriple']:
-                loss_optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            if method_name in ['proxyanchor', 'softtriple']:
-                loss_optimizer.step()
+        if method_name == 'npid':
+            loss, pos_samples = loss_criterion(proj_1, pos_index)
+        elif method_name == 'simclr':
+            feature_2, proj_2 = model(img_2.cuda())
+            loss = loss_criterion(proj_1, proj_2)
+        elif method_name == 'simsiam':
+            feature_2, proj_2 = model(img_2.cuda())
+            loss = loss_criterion(feature_1, feature_2, proj_1, proj_2)
+        else:
+            loss = loss_criterion(proj_1, img_label)
+        optimizer.zero_grad()
+        if method_name in ['proxyanchor', 'softtriple']:
+            loss_optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        if method_name in ['proxyanchor', 'softtriple']:
+            loss_optimizer.step()
 
-            if method_name == 'npid':
-                loss_criterion.enqueue(proj_1, pos_index, pos_samples)
+        if method_name == 'npid':
+            loss_criterion.enqueue(proj_1, pos_index, pos_samples)
 
-            current_iter += 1
-            total_loss += loss.item()
-            train_bar.set_description(
-                'Train Iter: [{}/{}] Loss: {:.4f}'.format(current_iter, total_iter, total_loss / current_iter))
-            if current_iter % 100 == 0:
-                results['train_loss'].append(total_loss / current_iter)
-                # every 100 iters to val the model
-                val_precise, features = val_contrast(model, val_loader, results, ranks, current_iter, total_iter)
-                # save statistics
-                data_frame = pd.DataFrame(data=results, index=range(1, current_iter // 100 + 1))
-                data_frame.to_csv('{}/{}_results.csv'.format(save_root, save_name_pre), index_label='iter')
+        current_iter += 1
+        total_loss += loss.item()
+        train_bar.set_description(
+            'Train Iter: [{}/{}] Loss: {:.4f}'.format(current_iter, total_iter, total_loss / current_iter))
+        if current_iter % 100 == 0:
+            results['train_loss'].append(total_loss / current_iter)
+            # every 100 iters to val the model
+            val_precise, features = val_contrast(model, val_loader, results, ranks, current_iter, total_iter)
+            # save statistics
+            data_frame = pd.DataFrame(data=results, index=range(1, current_iter // 100 + 1))
+            data_frame.to_csv('{}/{}_results.csv'.format(save_root, save_name_pre), index_label='iter')
 
-                if val_precise > best_precise:
-                    best_precise = val_precise
-                    torch.save(model.state_dict(), '{}/{}_model.pth'.format(save_root, save_name_pre))
-                    torch.save(features, '{}/{}_vectors.pth'.format(save_root, save_name_pre))
-            # stop iter data when arriving the total bp numbers
-            if current_iter == total_iter:
-                break
+            if val_precise > best_precise:
+                best_precise = val_precise
+                torch.save(model.state_dict(), '{}/{}_model.pth'.format(save_root, save_name_pre))
+                torch.save(features, '{}/{}_vectors.pth'.format(save_root, save_name_pre))
+        # stop iter data when arriving the total bp numbers
+        if current_iter == total_iter:
+            break

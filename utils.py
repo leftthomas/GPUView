@@ -26,7 +26,7 @@ def parse_common_args():
     parser.add_argument('--data_root', default='data', type=str, help='Datasets root path')
     parser.add_argument('--data_name', default='pacs', type=str, choices=['pacs', 'office'], help='Dataset name')
     parser.add_argument('--method_name', default='zsco', type=str,
-                        choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple', 'pretrained'],
+                        choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple'],
                         help='Compared method name')
     parser.add_argument('--hidden_dim', default=512, type=int, help='Hidden feature dim for projection head')
     parser.add_argument('--temperature', default=0.1, type=float, help='Temperature used in softmax')
@@ -131,7 +131,7 @@ class DomainDataset(Dataset):
 
 
 def recall(vectors, ranks, domains, categories, labels):
-    domain_vectors, domain_labels, acc = [], [], {}
+    domain_vectors, domain_labels, acc, value, num = [], [], {}, 0.0, 0
     for i, domain in enumerate(domains):
         domain_vectors.append(vectors[torch.as_tensor(categories) == i])
         domain_labels.append(torch.as_tensor(labels, device=vectors.device)[torch.as_tensor(categories) == i])
@@ -147,31 +147,18 @@ def recall(vectors, ranks, domains, categories, labels):
             # B -> A
             sim_ba = domain_b_vectors.mm(domain_a_vectors.t())
             idx_ba = sim_ba.topk(k=ranks[-1], dim=-1, largest=True)[1]
-            # cross domain A and B
-            vectors = torch.cat((domain_a_vectors, domain_b_vectors), dim=0)
-            labels = torch.cat((domain_a_labels, domain_b_labels), dim=0)
-            sim = vectors.mm(vectors.t())
-            sim.fill_diagonal_(-np.inf)
-            idx = sim.topk(k=ranks[-1], dim=-1, largest=True)[1]
 
-            for r in ranks:
+            for k, r in enumerate(ranks):
                 correct_ab = (torch.eq(domain_b_labels[idx_ab[:, 0:r]], domain_a_labels.unsqueeze(dim=-1))).any(dim=-1)
                 acc['{}->{}@{}'.format(domains[i], domains[j], r)] = (torch.sum(correct_ab) / correct_ab.size(0)).item()
                 correct_ba = (torch.eq(domain_a_labels[idx_ba[:, 0:r]], domain_b_labels.unsqueeze(dim=-1))).any(dim=-1)
                 acc['{}->{}@{}'.format(domains[j], domains[i], r)] = (torch.sum(correct_ba) / correct_ba.size(0)).item()
-                correct = (torch.eq(labels[idx[:, 0:r]], labels.unsqueeze(dim=-1))).any(dim=-1)
-                acc['{}<->{}@{}'.format(domains[i], domains[j], r)] = (torch.sum(correct) / correct.size(0)).item()
-    # cross all domains
-    vectors = torch.cat(domain_vectors, dim=0)
-    labels = torch.cat(domain_labels, dim=0)
-    sim = vectors.mm(vectors.t())
-    sim.fill_diagonal_(-np.inf)
-    idx = sim.topk(k=ranks[-1], dim=-1, largest=True)[1]
-    for r in ranks:
-        correct = (torch.eq(labels[idx[:, 0:r]], labels.unsqueeze(dim=-1))).any(dim=-1)
-        acc['cross@{}'.format(r)] = (torch.sum(correct) / correct.size(0)).item()
-    # the cross recall is chosen as the representative of precise
-    acc['val_precise'] = acc['cross@{}'.format(ranks[0])]
+                if k == 0:
+                    value += acc['{}->{}@{}'.format(domains[i], domains[j], r)]
+                    value += acc['{}->{}@{}'.format(domains[j], domains[i], r)]
+                    num += 2
+    # the mean R@1 is chosen as the representative of precise
+    acc['val_precise'] = value / num
     return acc
 
 

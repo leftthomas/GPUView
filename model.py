@@ -96,12 +96,11 @@ class Discriminator(nn.Module):
 
 
 class Backbone(nn.Module):
-    def __init__(self, hidden_dim, pretrained=False):
+    def __init__(self, hidden_dim):
         super(Backbone, self).__init__()
 
-        self.pretrained = pretrained
         self.f = []
-        for name, module in resnet50(pretrained).named_children():
+        for name, module in resnet50().named_children():
             if not isinstance(module, nn.Linear):
                 self.f.append(module)
         # encoder
