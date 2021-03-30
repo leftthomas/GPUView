@@ -62,9 +62,7 @@ optional arguments:
 --data_root                   Datasets root path [default value is 'data']
 --data_name                   Dataset name [default value is 'pacs'](choices=['pacs', 'office'])
 --method_name                 Compared method name [default value is 'zsco'](choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple', 'pretrained'])
---train_domains               Selected domains to train [default value is ['art', 'cartoon']]
---val_domains                 Selected domains to val [default value is ['photo', 'sketch']]
---hidden_dim                  Hidden feature dim for prediction head [default value is 512]
+--hidden_dim                  Hidden feature dim for projection head [default value is 512]
 --temperature                 Temperature used in softmax [default value is 0.1]
 --batch_size                  Number of images in each mini-batch [default value is 32]
 --total_iter                  Number of bp to train [default value is 10000]

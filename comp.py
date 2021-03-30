@@ -13,15 +13,15 @@ from utils import DomainDataset, val_contrast, parse_common_args
 parser = parse_common_args()
 # args parse
 args = parser.parse_args()
-data_root, data_name, method_name, train_domains = args.data_root, args.data_name, args.method_name, args.train_domains
-val_domains, hidden_dim, temperature, batch_size = args.val_domains, args.hidden_dim, args.temperature, args.batch_size
+data_root, data_name, method_name = args.data_root, args.data_name, args.method_name
+hidden_dim, temperature, batch_size = args.hidden_dim, args.temperature, args.batch_size
 total_iter, ranks, save_root = args.total_iter, args.ranks, args.save_root
 # asserts
 assert method_name != 'zsco', 'not support for {}'.format(method_name)
 
 # data prepare
-train_data = DomainDataset(data_root, data_name, domains=train_domains, train=True)
-val_data = DomainDataset(data_root, data_name, domains=val_domains, train=False)
+train_data = DomainDataset(data_root, data_name, data_type='train')
+val_data = DomainDataset(data_root, data_name, data_type='val')
 train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
 val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=8)
 
@@ -43,7 +43,7 @@ elif method_name == 'softtriple':
     loss_optimizer = Adam(loss_criterion.parameters(), lr=1e-3, weight_decay=1e-6)
 
 results = {'train_loss': [], 'val_precise': []}
-save_name_pre = '{}_{}_{}'.format(data_name, method_name, train_domains)
+save_name_pre = '{}_{}'.format(data_name, method_name)
 if not os.path.exists(save_root):
     os.makedirs(save_root)
 best_precise, total_loss, current_iter = 0.0, 0.0, 0

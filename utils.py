@@ -28,11 +28,7 @@ def parse_common_args():
     parser.add_argument('--method_name', default='zsco', type=str,
                         choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple', 'pretrained'],
                         help='Compared method name')
-    parser.add_argument('--train_domains', nargs='+', default=['art', 'cartoon'], type=str,
-                        help='Selected domains to train')
-    parser.add_argument('--val_domains', nargs='+', default=['photo', 'sketch'], type=str,
-                        help='Selected domains to val')
-    parser.add_argument('--hidden_dim', default=512, type=int, help='Hidden feature dim for prediction head')
+    parser.add_argument('--hidden_dim', default=512, type=int, help='Hidden feature dim for projection head')
     parser.add_argument('--temperature', default=0.1, type=float, help='Temperature used in softmax')
     parser.add_argument('--batch_size', default=32, type=int, help='Number of images in each mini-batch')
     parser.add_argument('--total_iter', default=10000, type=int, help='Number of bp to train')
@@ -63,8 +59,8 @@ class AddStyleCode(torch.nn.Module):
         return self.__class__.__name__ + '(style_num={0})'.format(self.style_num)
 
 
-def get_transform(train=True, style_num=0):
-    if train:
+def get_transform(data_type='train', style_num=0):
+    if data_type == 'train':
         return transforms.Compose([
             transforms.RandomResizedCrop(224, (1.0, 1.14)),
             transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
@@ -83,34 +79,31 @@ def get_transform(train=True, style_num=0):
 
 
 class DomainDataset(Dataset):
-    def __init__(self, data_root, data_name, domains, train=True, style_num=0):
+    def __init__(self, data_root, data_name, data_type='train', style_num=0):
         super(DomainDataset, self).__init__()
-        assert len(domains) == 2
-        if data_name == 'pacs':
-            for domain in domains:
-                assert domain in ['art', 'cartoon', 'photo', 'sketch']
-        else:
-            for domain in domains:
-                assert domain in ['art', 'clipart', 'product', 'real']
 
         self.data_name = data_name
-        self.domains = domains
-        self.images, self.categories, self.labels, self.classes, j = [], [], [], {}, 0
-        for i, domain in enumerate(self.domains):
-            images = sorted(glob.glob(os.path.join(data_root, data_name, domain, '*', '*.jpg')))
-            # which image
-            self.images += images
+        # which image
+        self.images = sorted(glob.glob(os.path.join(data_root, data_name, '*', data_type, '*', '*.jpg')))
+        self.categories, self.labels, self.domains, self.classes, i, j = [], [], {}, {}, 0, 0
+        for image in self.images:
+            domain = os.path.dirname(image).split('/')[-3]
+            if domain not in self.domains:
+                self.domains[domain] = i
+                i += 1
             # which domain
-            self.categories += [i] * len(images)
+            self.categories.append(self.domains[domain])
+
+            label = os.path.dirname(image).split('/')[-1]
+            if label not in self.classes:
+                self.classes[label] = j
+                j += 1
             # which label
-            for image in images:
-                label = os.path.dirname(image).split('/')[-1]
-                if label not in self.classes:
-                    self.classes[label] = j
-                    j += 1
-                self.labels.append(self.classes[label])
+            self.labels.append(self.classes[label])
+
+        self.domains = bidict(self.domains)
         self.classes = bidict(self.classes)
-        self.transform = get_transform(train, style_num)
+        self.transform = get_transform(data_type, style_num)
 
     def __getitem__(self, index):
         img_name = self.images[index]
@@ -138,28 +131,47 @@ class DomainDataset(Dataset):
 
 
 def recall(vectors, ranks, domains, categories, labels):
-    categories = torch.as_tensor(categories, dtype=torch.bool, device=vectors.device)
-    labels = torch.as_tensor(labels, device=vectors.device)
-    acc = {}
-    domain_a_vectors = vectors[~categories]
-    domain_b_vectors = vectors[categories]
-    domain_a_labels = labels[~categories]
-    domain_b_labels = labels[categories]
-    # A -> B
-    sim_ab = domain_a_vectors.mm(domain_b_vectors.t())
-    idx_ab = sim_ab.topk(k=ranks[-1], dim=-1, largest=True)[1]
-    # B -> A
-    sim_ba = domain_b_vectors.mm(domain_a_vectors.t())
-    idx_ba = sim_ba.topk(k=ranks[-1], dim=-1, largest=True)[1]
+    domain_vectors, domain_labels, acc = [], [], {}
+    for i, domain in enumerate(domains):
+        domain_vectors.append(vectors[torch.as_tensor(categories) == i])
+        domain_labels.append(torch.as_tensor(labels, device=vectors.device)[torch.as_tensor(categories) == i])
+    for i in range(len(domain_vectors)):
+        for j in range(i + 1, len(domain_vectors)):
+            domain_a_vectors = domain_vectors[i]
+            domain_b_vectors = domain_vectors[j]
+            domain_a_labels = domain_labels[i]
+            domain_b_labels = domain_labels[j]
+            # A -> B
+            sim_ab = domain_a_vectors.mm(domain_b_vectors.t())
+            idx_ab = sim_ab.topk(k=ranks[-1], dim=-1, largest=True)[1]
+            # B -> A
+            sim_ba = domain_b_vectors.mm(domain_a_vectors.t())
+            idx_ba = sim_ba.topk(k=ranks[-1], dim=-1, largest=True)[1]
+            # cross domain A and B
+            vectors = torch.cat((domain_a_vectors, domain_b_vectors), dim=0)
+            labels = torch.cat((domain_a_labels, domain_b_labels), dim=0)
+            sim = vectors.mm(vectors.t())
+            sim.fill_diagonal_(-np.inf)
+            idx = sim.topk(k=ranks[-1], dim=-1, largest=True)[1]
 
+            for r in ranks:
+                correct_ab = (torch.eq(domain_b_labels[idx_ab[:, 0:r]], domain_a_labels.unsqueeze(dim=-1))).any(dim=-1)
+                acc['{}->{}@{}'.format(domains[i], domains[j], r)] = (torch.sum(correct_ab) / correct_ab.size(0)).item()
+                correct_ba = (torch.eq(domain_a_labels[idx_ba[:, 0:r]], domain_b_labels.unsqueeze(dim=-1))).any(dim=-1)
+                acc['{}->{}@{}'.format(domains[j], domains[i], r)] = (torch.sum(correct_ba) / correct_ba.size(0)).item()
+                correct = (torch.eq(labels[idx[:, 0:r]], labels.unsqueeze(dim=-1))).any(dim=-1)
+                acc['{}<->{}@{}'.format(domains[i], domains[j], r)] = (torch.sum(correct) / correct.size(0)).item()
+    # cross all domains
+    vectors = torch.cat(domain_vectors, dim=0)
+    labels = torch.cat(domain_labels, dim=0)
+    sim = vectors.mm(vectors.t())
+    sim.fill_diagonal_(-np.inf)
+    idx = sim.topk(k=ranks[-1], dim=-1, largest=True)[1]
     for r in ranks:
-        correct_ab = (torch.eq(domain_b_labels[idx_ab[:, 0:r]], domain_a_labels.unsqueeze(dim=-1))).any(dim=-1)
-        acc['{}->{}@{}'.format(domains[0], domains[1], r)] = (torch.sum(correct_ab) / correct_ab.size(0)).item()
-        correct_ba = (torch.eq(domain_a_labels[idx_ba[:, 0:r]], domain_b_labels.unsqueeze(dim=-1))).any(dim=-1)
-        acc['{}->{}@{}'.format(domains[1], domains[0], r)] = (torch.sum(correct_ba) / correct_ba.size(0)).item()
+        correct = (torch.eq(labels[idx[:, 0:r]], labels.unsqueeze(dim=-1))).any(dim=-1)
+        acc['cross@{}'.format(r)] = (torch.sum(correct) / correct.size(0)).item()
     # the cross recall is chosen as the representative of precise
-    acc['val_precise'] = (acc['{}->{}@{}'.format(domains[0], domains[1], ranks[0])] + acc[
-        '{}->{}@{}'.format(domains[1], domains[0], ranks[0])]) / 2
+    acc['val_precise'] = acc['cross@{}'.format(ranks[0])]
     return acc
 
 
@@ -171,7 +183,7 @@ def val_contrast(net, data_loader, results, ranks, current_iter, total_iter):
         for data, _, _, _, _, _ in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
             vectors.append(net(data.cuda())[0])
         vectors = torch.cat(vectors, dim=0)
-        acc = recall(vectors, ranks, data_loader.dataset.domains, data_loader.dataset.categories,
+        acc = recall(vectors, ranks, sorted(data_loader.dataset.domains.keys()), data_loader.dataset.categories,
                      data_loader.dataset.labels)
         precise = acc['val_precise'] * 100
         print('Val Iter: [{}/{}] Precise: {:.2f}%'.format(current_iter, total_iter, precise))
