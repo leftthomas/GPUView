@@ -190,7 +190,7 @@ class ReplayBuffer:
 
     def push_and_pop(self, data):
         to_return = []
-        for element in data.detach():
+        for element in data.detach().cpu():
             element = torch.unsqueeze(element, 0)
             if len(self.data) < self.max_size:
                 self.data.append(element)

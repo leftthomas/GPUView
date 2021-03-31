@@ -129,7 +129,7 @@ for r in range(1, rounds + 1):
             optimizer_DF.zero_grad()
             pred_real_content = DF(content)
             target_real_content = torch.ones(pred_real_content.size(), device=pred_real_content.device)
-            fake_content = torch.stack([content_buffer.push_and_pop(fake_c) for fake_c, content_buffer in
+            fake_content = torch.stack([content_buffer.push_and_pop(fake_c).cuda() for fake_c, content_buffer in
                                         zip(fake_content, fake_content_buffer)], dim=0)
             pred_fake_content = DF(torch.cat((fake_content, style_codes.cuda()), dim=1))
             target_fake_content = torch.zeros(pred_fake_content.size(), device=pred_fake_content.device)
@@ -143,7 +143,7 @@ for r in range(1, rounds + 1):
             optimizer_DG.zero_grad()
             pred_real_style = DG(styles)
             target_real_style = torch.ones(pred_real_style.size(), device=pred_real_style.device)
-            fake_style = torch.stack([style_buffer.push_and_pop(fake_s) for fake_s, style_buffer in
+            fake_style = torch.stack([style_buffer.push_and_pop(fake_s).cuda() for fake_s, style_buffer in
                                       zip(fake_style, fake_style_buffer)], dim=0)
             pred_fake_style = DG(torch.cat((fake_style, style_codes.cuda()), dim=1))
             target_fake_style = torch.zeros(pred_fake_style.size(), device=pred_fake_style.device)
