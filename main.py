@@ -1,10 +1,8 @@
 import itertools
 import os
-import random
 
 import pandas as pd
 import torch
-from PIL import Image
 from thop import clever_format, profile
 from torch.optim import Adam
 from torch.optim.lr_scheduler import LambdaLR
@@ -23,20 +21,20 @@ parser.add_argument('--rounds', default=5, type=int, help='Number of round to tr
 
 # args parse
 args = parser.parse_args()
-data_root, data_name, method_name, train_domains = args.data_root, args.data_name, args.method_name, args.train_domains
-val_domains, hidden_dim, temperature, batch_size = args.val_domains, args.hidden_dim, args.temperature, args.batch_size
+data_root, data_name, method_name = args.data_root, args.data_name, args.method_name
+hidden_dim, temperature, batch_size = args.hidden_dim, args.temperature, args.batch_size
 style_num, gan_iter, contrast_iter = args.style_num, args.gan_iter, args.total_iter
 ranks, save_root, rounds = args.ranks, args.save_root, args.rounds
 # asserts
 assert method_name == 'zsco', 'not support for {}'.format(method_name)
 
 # data prepare
-train_contrast_data = DomainDataset(data_root, data_name, train_domains, train=True)
+train_contrast_data = DomainDataset(data_root, data_name, data_type='train')
 train_contrast_loader = DataLoader(train_contrast_data, batch_size=batch_size, shuffle=True, num_workers=8,
                                    drop_last=True)
-val_contrast_data = DomainDataset(data_root, data_name, val_domains, train=False)
+val_contrast_data = DomainDataset(data_root, data_name, data_type='val')
 val_contrast_loader = DataLoader(val_contrast_data, batch_size=batch_size, shuffle=False, num_workers=8)
-val_gan_data = DomainDataset(data_root, data_name, val_domains, train=False, style_num=style_num)
+val_gan_data = DomainDataset(data_root, data_name, data_type='val', style_num=style_num)
 val_gan_loader = DataLoader(val_gan_data, batch_size=1, shuffle=False, num_workers=8)
 
 # model setup
@@ -58,7 +56,7 @@ best_precise, total_contrast_loss = 0.0, 0.0
 # training loop
 for r in range(1, rounds + 1):
     # each round should refresh style images
-    train_gan_data = DomainDataset(data_root, data_name, train_domains, train=True, style_num=style_num)
+    train_gan_data = DomainDataset(data_root, data_name, data_type='train', style_num=style_num)
     style_images, style_names, style_categories, style_labels = train_gan_data.refresh(style_num)
     style_codes = obtain_style_code(style_num, size=[224, 224])
     train_gan_loader = DataLoader(train_gan_data, batch_size=1, shuffle=True, num_workers=8)
@@ -106,8 +104,8 @@ for r in range(1, rounds + 1):
         train_bar = tqdm(train_gan_loader, dynamic_ncols=True)
         for content, _, _, _, _, _ in train_bar:
             content = content.squeeze(dim=0).cuda()
-            styles = torch.cat((torch.stack([(get_transform(train=True)(style)).cuda() for style in style_images],
-                                            dim=0), style_codes.cuda()), dim=1)
+            styles = torch.cat((torch.stack([(get_transform(data_type='train')(style)).cuda()
+                                             for style in style_images], dim=0), style_codes.cuda()), dim=1)
             # F and G
             optimizer_FG.zero_grad()
             fake_style = F(content)
@@ -131,7 +129,7 @@ for r in range(1, rounds + 1):
             optimizer_DF.zero_grad()
             pred_real_content = DF(content)
             target_real_content = torch.ones(pred_real_content.size(), device=pred_real_content.device)
-            fake_content = torch.stack([content_buffer.push_and_pop(fake_c[:3, :, :]) for fake_c, content_buffer in
+            fake_content = torch.stack([content_buffer.push_and_pop(fake_c) for fake_c, content_buffer in
                                         zip(fake_content, fake_content_buffer)], dim=0)
             pred_fake_content = DF(torch.cat((fake_content, style_codes.cuda()), dim=1))
             target_fake_content = torch.zeros(pred_fake_content.size(), device=pred_fake_content.device)
@@ -145,7 +143,7 @@ for r in range(1, rounds + 1):
             optimizer_DG.zero_grad()
             pred_real_style = DG(styles)
             target_real_style = torch.ones(pred_real_style.size(), device=pred_real_style.device)
-            fake_style = torch.stack([style_buffer.push_and_pop(fake_s[:3, :, :]) for fake_s, style_buffer in
+            fake_style = torch.stack([style_buffer.push_and_pop(fake_s) for fake_s, style_buffer in
                                       zip(fake_style, fake_style_buffer)], dim=0)
             pred_fake_style = DG(torch.cat((fake_style, style_codes.cuda()), dim=1))
             target_fake_style = torch.zeros(pred_fake_style.size(), device=pred_fake_style.device)
@@ -176,9 +174,9 @@ for r in range(1, rounds + 1):
                 F.eval()
                 with torch.no_grad():
                     for image, name, category, label in zip(style_images, style_names, style_categories, style_labels):
-                        domain = val_gan_data.domains[category]
+                        domain = train_gan_data.domains.inverse[category]
                         name = os.path.basename(name)
-                        label = val_gan_data.classes.inverse[label]
+                        label = train_gan_data.classes.inverse[label]
                         path = '{}/{}/round-{}/{}_{}_{}'.format(save_root, save_name_pre, r, domain, label, name)
                         if not os.path.exists(os.path.dirname(path)):
                             os.makedirs(os.path.dirname(path))
@@ -189,10 +187,10 @@ for r in range(1, rounds + 1):
                         fake_style = (F(img.squeeze(dim=0).cuda()) + 1.0) / 2
                         for fake_s, style_category, style_label, style_name in zip(fake_style, style_categories,
                                                                                    style_labels, style_names):
-                            style_domain = val_gan_data.domains[style_category]
+                            style_domain = train_gan_data.domains.inverse[style_category]
                             style_name = os.path.basename(style_name)
-                            style_label = val_gan_data.classes.inverse[style_label]
-                            domain = val_gan_data.domains[category[0].item()]
+                            style_label = train_gan_data.classes.inverse[style_label]
+                            domain = val_gan_data.domains.inverse[category[0].item()]
                             name = os.path.basename(img_name[0])
                             label_name = val_gan_data.classes.inverse[label[0].item()]
                             img_path = '{}/{}/round-{}/{}_{}_{}/{}_{}_{}'.format(save_root, save_name_pre, r,
@@ -218,11 +216,11 @@ for r in range(1, rounds + 1):
             img_1 = img_1.cuda()
             _, proj_1 = backbone(img_1)
             with torch.no_grad():
-                # TODO
-                fs = random.choices(F, k=batch_size)
+                codes = style_codes[torch.randint(style_num, (batch_size,))]
+                imgs = torch.cat((img_1, codes.cuda()), dim=1)
                 img_2 = []
-                for f, img in zip(fs, img_name):
-                    img_2.append(f((get_transform('train')(Image.open(img))).unsqueeze(dim=0).cuda()))
+                for img in torch.split(imgs, style_num):
+                    img_2.append(F(img))
                 img_2 = torch.cat(img_2, dim=0)
             _, proj_2 = backbone(img_2)
             loss = criterion_contrast(proj_1, proj_2)
