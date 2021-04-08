@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import torch
+from PIL import Image
 from thop import clever_format, profile
 from torch.optim import Adam
 from torch.optim.lr_scheduler import LambdaLR
@@ -217,7 +218,11 @@ for r in range(1, rounds + 1):
             _, proj_1 = backbone(img_1)
             with torch.no_grad():
                 codes = style_codes[torch.randint(style_num, (batch_size,))]
-                imgs = torch.cat((img_1, codes.cuda()), dim=1)
+                imgs = []
+                for img in img_name:
+                    imgs.append((get_transform('train')(Image.open(img))).cuda())
+                imgs = torch.stack(imgs, dim=0)
+                imgs = torch.cat((imgs, codes.cuda()), dim=1)
                 img_2 = []
                 for img in torch.split(imgs, style_num):
                     img_2.append(F(img))
