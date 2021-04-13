@@ -100,7 +100,7 @@ class Backbone(nn.Module):
         super(Backbone, self).__init__()
 
         self.f = []
-        for name, module in resnet50().named_children():
+        for name, module in resnet50(pretrained=True).named_children():
             if not isinstance(module, nn.Linear):
                 self.f.append(module)
         # encoder
