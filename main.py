@@ -25,7 +25,7 @@ args = parser.parse_args()
 data_root, data_name, method_name = args.data_root, args.data_name, args.method_name
 hidden_dim, temperature, batch_size = args.hidden_dim, args.temperature, args.batch_size
 style_num, gan_iter, contrast_iter = args.style_num, args.gan_iter, args.total_iter
-ranks, save_root, rounds = args.ranks, args.save_root, args.rounds
+save_root, rounds = args.save_root, args.rounds
 # asserts
 assert method_name == 'zsco', 'not support for {}'.format(method_name)
 
@@ -242,7 +242,7 @@ for r in range(1, rounds + 1):
                     total_contrast_loss / (current_contrast_iter + contrast_iter * (r - 1)))
                 # every 100 iters to val the model
                 val_precise, features = val_contrast(backbone, val_contrast_loader, contrast_results,
-                                                     ranks, current_contrast_iter + contrast_iter * (r - 1),
+                                                     current_contrast_iter + contrast_iter * (r - 1),
                                                      contrast_iter * rounds)
                 # save statistics
                 data_frame = pd.DataFrame(data=contrast_results,

@@ -15,7 +15,7 @@ parser = parse_common_args()
 args = parser.parse_args()
 data_root, data_name, method_name = args.data_root, args.data_name, args.method_name
 hidden_dim, temperature, batch_size = args.hidden_dim, args.temperature, args.batch_size
-total_iter, ranks, save_root = args.total_iter, args.ranks, args.save_root
+total_iter, save_root = args.total_iter, args.save_root
 # asserts
 assert method_name != 'zsco', 'not support for {}'.format(method_name)
 
@@ -84,7 +84,7 @@ for epoch in range(1, epochs + 1):
         if current_iter % 100 == 0:
             results['train_loss'].append(total_loss / current_iter)
             # every 100 iters to val the model
-            val_precise, features = val_contrast(model, val_loader, results, ranks, current_iter, total_iter)
+            val_precise, features = val_contrast(model, val_loader, results, current_iter, total_iter)
             # save statistics
             data_frame = pd.DataFrame(data=results, index=range(1, current_iter // 100 + 1))
             data_frame.to_csv('{}/{}_results.csv'.format(save_root, save_name_pre), index_label='iter')

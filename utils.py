@@ -24,7 +24,8 @@ def parse_common_args():
     # common args
     parser = argparse.ArgumentParser(description='Train Model')
     parser.add_argument('--data_root', default='data', type=str, help='Datasets root path')
-    parser.add_argument('--data_name', default='pacs', type=str, choices=['pacs', 'office'], help='Dataset name')
+    parser.add_argument('--data_name', default='pacs', type=str,
+                        choices=['pacs', 'office_31', 'office_home', 'domainnet'], help='Dataset name')
     parser.add_argument('--method_name', default='zsco', type=str,
                         choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple'],
                         help='Compared method name')
@@ -32,7 +33,6 @@ def parse_common_args():
     parser.add_argument('--temperature', default=0.1, type=float, help='Temperature used in softmax')
     parser.add_argument('--batch_size', default=32, type=int, help='Number of images in each mini-batch')
     parser.add_argument('--total_iter', default=10000, type=int, help='Number of bp to train')
-    parser.add_argument('--ranks', nargs='+', default=[1, 5, 10], type=int, help='Selected recall to val')
     parser.add_argument('--save_root', default='result', type=str, help='Result saved root path')
     return parser
 
@@ -130,7 +130,7 @@ class DomainDataset(Dataset):
         return images, names, categories, labels
 
 
-def recall(vectors, ranks, domains, categories, labels):
+def compute_map(vectors, domains, categories, labels):
     domain_vectors, domain_labels, acc, value, num = [], [], {}, 0.0, 0
     for i, domain in enumerate(domains):
         domain_vectors.append(vectors[torch.as_tensor(categories) == i])
@@ -163,15 +163,15 @@ def recall(vectors, ranks, domains, categories, labels):
 
 
 # val for all val data
-def val_contrast(net, data_loader, results, ranks, current_iter, total_iter):
+def val_contrast(net, data_loader, results, current_iter, total_iter):
     net.eval()
     vectors = []
     with torch.no_grad():
         for data, _, _, _, _, _ in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
             vectors.append(net(data.cuda())[0])
         vectors = torch.cat(vectors, dim=0)
-        acc = recall(vectors, ranks, sorted(data_loader.dataset.domains.keys()), data_loader.dataset.categories,
-                     data_loader.dataset.labels)
+        acc = compute_map(vectors, sorted(data_loader.dataset.domains.keys()), data_loader.dataset.categories,
+                          data_loader.dataset.labels)
         precise = acc['val_precise'] * 100
         print('Val Iter: [{}/{}] Precise: {:.2f}%'.format(current_iter, total_iter, precise))
         for key, value in acc.items():
