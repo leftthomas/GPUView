@@ -143,21 +143,31 @@ def compute_map(vectors, domains, categories, labels):
             domain_b_labels = domain_labels[j]
             # A -> B
             sim_ab = domain_a_vectors.mm(domain_b_vectors.t())
-            idx_ab = sim_ab.topk(k=ranks[-1], dim=-1, largest=True)[1]
+            idx_ab = sim_ab.argsort(dim=-1, descending=True)
+            precision_ab = 0.0
+            for idx in range(len(domain_a_labels)):
+                mask_ab = torch.eq(domain_b_labels, domain_a_labels[idx])
+                rank_ab = idx_ab[idx, mask_ab].sort(dim=-1)[0]
+                precise_ab = (torch.arange(len(rank_ab), device=vectors.device) + 1) / (rank_ab + 1)
+                precision_ab += precise_ab.mean().item()
+            precision_ab /= len(domain_a_labels)
             # B -> A
             sim_ba = domain_b_vectors.mm(domain_a_vectors.t())
-            idx_ba = sim_ba.topk(k=ranks[-1], dim=-1, largest=True)[1]
+            idx_ba = sim_ba.argsort(dim=-1, descending=True)
+            precision_ba = 0.0
+            for idx in range(len(domain_b_labels)):
+                mask_ba = torch.eq(domain_a_labels, domain_b_labels[idx])
+                rank_ba = idx_ba[idx, mask_ba].sort(dim=-1)[0]
+                precise_ba = (torch.arange(len(rank_ba), device=vectors.device) + 1) / (rank_ba + 1)
+                precision_ba += precise_ba.mean().item()
+            precision_ba /= len(domain_b_labels)
 
-            for k, r in enumerate(ranks):
-                correct_ab = (torch.eq(domain_b_labels[idx_ab[:, 0:r]], domain_a_labels.unsqueeze(dim=-1))).any(dim=-1)
-                acc['{}->{}@{}'.format(domains[i], domains[j], r)] = (torch.sum(correct_ab) / correct_ab.size(0)).item()
-                correct_ba = (torch.eq(domain_a_labels[idx_ba[:, 0:r]], domain_b_labels.unsqueeze(dim=-1))).any(dim=-1)
-                acc['{}->{}@{}'.format(domains[j], domains[i], r)] = (torch.sum(correct_ba) / correct_ba.size(0)).item()
-                if k == 0:
-                    value += acc['{}->{}@{}'.format(domains[i], domains[j], r)]
-                    value += acc['{}->{}@{}'.format(domains[j], domains[i], r)]
-                    num += 2
-    # the mean R@1 is chosen as the representative of precise
+            acc['{}->{}'.format(domains[i], domains[j])] = precision_ab
+            acc['{}->{}'.format(domains[j], domains[i])] = precision_ba
+            value += acc['{}->{}'.format(domains[i], domains[j])]
+            value += acc['{}->{}'.format(domains[j], domains[i])]
+            num += 2
+    # the mean map is chosen as the representative of precise
     acc['val_precise'] = value / num
     return acc
 
