@@ -125,82 +125,82 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
 <tbody>
   <tr>
     <td align="center">NPID</td>
-    <td align="center">34.5</td>
-    <td align="center">35.9</td>
-    <td align="center">37.6</td>
-    <td align="center">38.7</td>
-    <td align="center">27.4</td>
-    <td align="center">33.0</td>
-    <td align="center">35.6</td>
-    <td align="center">34.8</td>
-    <td align="center">33.6</td>
-    <td align="center">37.4</td>
-    <td align="center">27.9</td>
-    <td align="center">29.1</td>
+    <td align="center">35.8</td>
+    <td align="center">35.0</td>
+    <td align="center">37.1</td>
+    <td align="center">36.4</td>
+    <td align="center">39.4</td>
+    <td align="center">26.2</td>
+    <td align="center">36.0</td>
+    <td align="center">35.8</td>
+    <td align="center">47.4</td>
+    <td align="center">38.9</td>
+    <td align="center">40.7</td>
+    <td align="center">35.8</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SimCLR</td>
-    <td align="center">34.4</td>
-    <td align="center">35.3</td>
-    <td align="center">39.0</td>
-    <td align="center">38.3</td>
-    <td align="center">26.6</td>
-    <td align="center">27.9</td>
-    <td align="center">36.3</td>
-    <td align="center">34.6</td>
-    <td align="center">33.6</td>
-    <td align="center">38.5</td>
+    <td align="center">36.9</td>
+    <td align="center">37.4</td>
+    <td align="center">42.9</td>
+    <td align="center">42.6</td>
+    <td align="center">28.2</td>
+    <td align="center">32.1</td>
+    <td align="center">39.4</td>
+    <td align="center">36.8</td>
+    <td align="center">34.5</td>
+    <td align="center">41.5</td>
+    <td align="center">26.8</td>
     <td align="center">28.4</td>
-    <td align="center">33.0</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SimSiam</td>
-    <td align="center">38.8</td>
-    <td align="center">35.1</td>
-    <td align="center">38.1</td>
-    <td align="center">38.0</td>
-    <td align="center">38.8</td>
-    <td align="center">29.2</td>
-    <td align="center">37.7</td>
-    <td align="center">39.1</td>
-    <td align="center">43.4</td>
-    <td align="center">41.6</td>
+    <td align="center">37.5</td>
+    <td align="center">37.8</td>
+    <td align="center">40.3</td>
+    <td align="center">40.7</td>
+    <td align="center">33.4</td>
+    <td align="center">40.2</td>
+    <td align="center">40.0</td>
+    <td align="center">37.5</td>
     <td align="center">39.5</td>
-    <td align="center">30.0</td>
+    <td align="center">40.3</td>
+    <td align="center">33.5</td>
+    <td align="center">27.4</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SoftTriple</td>
+    <td align="center">46.2</td>
+    <td align="center">48.7</td>
+    <td align="center">56.5</td>
+    <td align="center">59.4</td>
+    <td align="center">37.6</td>
     <td align="center">35.2</td>
-    <td align="center">35.9</td>
+    <td align="center">57.6</td>
+    <td align="center">57.2</td>
+    <td align="center">48.0</td>
+    <td align="center">48.6</td>
     <td align="center">43.8</td>
-    <td align="center">37.3</td>
-    <td align="center">26.6</td>
-    <td align="center">29.6</td>
-    <td align="center">42.4</td>
-    <td align="center">35.5</td>
-    <td align="center">34.1</td>
-    <td align="center">41.3</td>
-    <td align="center">26.4</td>
-    <td align="center">45.8</td>
+    <td align="center">52.5</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">ProxyAnchor</td>
-    <td align="center">36.2</td>
-    <td align="center">37.2</td>
-    <td align="center">39.9</td>
-    <td align="center">38.0</td>
-    <td align="center">27.2</td>
-    <td align="center">36.9</td>
-    <td align="center">37.8</td>
-    <td align="center">36.0</td>
-    <td align="center">34.0</td>
-    <td align="center">42.0</td>
-    <td align="center">27.7</td>
-    <td align="center">30.6</td>
+    <td align="center">47.7</td>
+    <td align="center">48.6</td>
+    <td align="center">56.9</td>
+    <td align="center">57.2</td>
+    <td align="center">49.1</td>
+    <td align="center">46.9</td>
+    <td align="center">50.3</td>
+    <td align="center">49.3</td>
+    <td align="center">49.8</td>
+    <td align="center">49.6</td>
+    <td align="center">48.6</td>
+    <td align="center">40.3</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
