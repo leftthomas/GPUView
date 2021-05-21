@@ -237,52 +237,52 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
 <tbody>
   <tr>
     <td align="center">NPID</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
+    <td align="center">11.2</td>
+    <td align="center">8.7</td>
+    <td align="center">11.4</td>
+    <td align="center">8.9</td>
+    <td align="center">21.2</td>
+    <td align="center">24.0</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SimCLR</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
+    <td align="center">13.3</td>
+    <td align="center">10.4</td>
+    <td align="center">12.4</td>
+    <td align="center">10.4</td>
+    <td align="center">21.3</td>
+    <td align="center">22.9</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SimSiam</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">93.6</td>
+    <td align="center">13.2</td>
+    <td align="center">9.0</td>
+    <td align="center">12.4</td>
+    <td align="center">8.7</td>
+    <td align="center">17.9</td>
+    <td align="center">20.1</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SoftTriple</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">18.6</td>
+    <td align="center">14.7</td>
+    <td align="center">18.2</td>
+    <td align="center">14.9</td>
+    <td align="center">40.4</td>
+    <td align="center">42.7</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">ProxyAnchor</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">18.3</td>
+    <td align="center">12.7</td>
+    <td align="center">16.1</td>
+    <td align="center">12.4</td>
+    <td align="center">36.4</td>
+    <td align="center">38.1</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
