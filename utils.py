@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from bidict import bidict
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 from torch.backends import cudnn
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
@@ -24,8 +25,8 @@ def parse_common_args():
     # common args
     parser = argparse.ArgumentParser(description='Train Model')
     parser.add_argument('--data_root', default='data', type=str, help='Datasets root path')
-    parser.add_argument('--data_name', default='pacs', type=str,
-                        choices=['pacs', 'office_31', 'office_home', 'domainnet'], help='Dataset name')
+    parser.add_argument('--data_name', default='pacs', type=str, choices=['pacs', 'office_31', 'office_home'],
+                        help='Dataset name')
     parser.add_argument('--method_name', default='zsco', type=str,
                         choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple'],
                         help='Compared method name')
@@ -131,6 +132,7 @@ class DomainDataset(Dataset):
 
 
 def compute_map(vectors, domains, categories, labels):
+    computer = AccuracyCalculator(include=['mean_average_precision'])
     domain_vectors, domain_labels, acc, value, num = [], [], {}, 0.0, 0
     for i, domain in enumerate(domains):
         domain_vectors.append(vectors[torch.as_tensor(categories) == i])
@@ -142,30 +144,14 @@ def compute_map(vectors, domains, categories, labels):
             domain_a_labels = domain_labels[i]
             domain_b_labels = domain_labels[j]
             # A -> B
-            sim_ab = domain_a_vectors.mm(domain_b_vectors.t())
-            idx_ab = sim_ab.argsort(dim=-1, descending=True)
-            precision_ab = 0.0
-            for idx in range(len(domain_a_labels)):
-                mask_ab = torch.eq(domain_b_labels, domain_a_labels[idx])
-                rank_ab = idx_ab[idx, mask_ab].sort(dim=-1)[0]
-                precise_ab = (torch.arange(len(rank_ab), device=vectors.device) + 1) / (rank_ab + 1)
-                precision_ab += precise_ab.mean().item()
-            precision_ab /= len(domain_a_labels)
+            map_ab = computer.get_accuracy(domain_a_vectors, domain_b_vectors, domain_a_labels, domain_b_labels, False)
             # B -> A
-            sim_ba = domain_b_vectors.mm(domain_a_vectors.t())
-            idx_ba = sim_ba.argsort(dim=-1, descending=True)
-            precision_ba = 0.0
-            for idx in range(len(domain_b_labels)):
-                mask_ba = torch.eq(domain_a_labels, domain_b_labels[idx])
-                rank_ba = idx_ba[idx, mask_ba].sort(dim=-1)[0]
-                precise_ba = (torch.arange(len(rank_ba), device=vectors.device) + 1) / (rank_ba + 1)
-                precision_ba += precise_ba.mean().item()
-            precision_ba /= len(domain_b_labels)
+            map_ba = computer.get_accuracy(domain_b_vectors, domain_a_vectors, domain_b_labels, domain_a_labels, False)
 
-            acc['{}->{}'.format(domains[i], domains[j])] = precision_ab
-            acc['{}->{}'.format(domains[j], domains[i])] = precision_ba
-            value += acc['{}->{}'.format(domains[i], domains[j])]
-            value += acc['{}->{}'.format(domains[j], domains[i])]
+            acc['{}->{}'.format(domains[i], domains[j])] = map_ab['mean_average_precision']
+            acc['{}->{}'.format(domains[j], domains[i])] = map_ba['mean_average_precision']
+            value += map_ab['mean_average_precision']
+            value += map_ba['mean_average_precision']
             num += 2
     # the mean map is chosen as the representative of precise
     acc['val_precise'] = value / num

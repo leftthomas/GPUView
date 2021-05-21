@@ -11,13 +11,19 @@ paper [Zero-Shot Cross-Domain Image Retrieval Through An Alternate One-Shot Tran
 - [PyTorch](https://pytorch.org)
 
 ```
-conda install pytorch=1.8.1 torchvision cudatoolkit=11.1 -c pytorch -c nvidia
+conda install pytorch=1.8.1 torchvision cudatoolkit -c pytorch -c nvidia
 ```
 
 - [Pytorch Metric Learning](https://kevinmusgrave.github.io/pytorch-metric-learning/)
 
 ```
 pip install pytorch-metric-learning
+```
+
+- [Faiss](https://faiss.ai)
+
+```
+conda install -c pytorch faiss-gpu
 ```
 
 - [THOP](https://github.com/Lyken17/pytorch-OpCounter)
@@ -34,11 +40,11 @@ pip install bidict
 
 ## Dataset
 
-[PACS](https://domaingeneralization.github.io), [Office-31](https://people.eecs.berkeley.edu/~jhoffman/domainadapt),
-[Office-Home](https://www.hemanthdv.org/officeHomeDataset.html) and [DomainNet](http://ai.bu.edu/M3SDA/)
-datasets are used in this repo, you could download these datasets from official websites, or download them from
-[MEGA](https://mega.nz/folder/M8RFgCzL#nLK35A45QVLCTFqqRzc3vQ). The data should be rearranged, please refer the paper to
-acquire the details of `train/val` split. The data directory structure is shown as follows:
+[PACS](https://domaingeneralization.github.io), [Office-31](https://people.eecs.berkeley.edu/~jhoffman/domainadapt) and
+[Office-Home](https://www.hemanthdv.org/officeHomeDataset.html) datasets are used in this repo, you could download these
+datasets from official websites, or download them from [MEGA](https://mega.nz/folder/M8RFgCzL#nLK35A45QVLCTFqqRzc3vQ).
+The data should be rearranged, please refer the paper to acquire the details of `train/val` split. The data directory
+structure is shown as follows:
 
  ```
 pacs
@@ -61,8 +67,6 @@ office_31
     same structure as pacs
 office_home
     same structure as pacs
-domainnet
-    same structure as pacs
 ```
 
 ## Usage
@@ -72,7 +76,7 @@ python main.py or comp.py --data_name office_home
 optional arguments:
 # common args
 --data_root                   Datasets root path [default value is 'data']
---data_name                   Dataset name [default value is 'pacs'](choices=['pacs', 'office_31', 'office_home', 'domainnet'])
+--data_name                   Dataset name [default value is 'pacs'](choices=['pacs', 'office_31', 'office_home'])
 --method_name                 Compared method name [default value is 'zsco'](choices=['zsco', 'simsiam', 'simclr', 'npid', 'proxyanchor', 'softtriple'])
 --hidden_dim                  Hidden feature dim for projection head [default value is 512]
 --temperature                 Temperature used in softmax [default value is 0.1]
@@ -121,82 +125,82 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
 <tbody>
   <tr>
     <td align="center">NPID</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">34.5</td>
+    <td align="center">35.9</td>
+    <td align="center">37.6</td>
+    <td align="center">38.7</td>
+    <td align="center">27.4</td>
+    <td align="center">33.0</td>
+    <td align="center">35.6</td>
+    <td align="center">34.8</td>
+    <td align="center">33.6</td>
+    <td align="center">37.4</td>
+    <td align="center">27.9</td>
+    <td align="center">29.1</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SimCLR</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">34.4</td>
+    <td align="center">35.3</td>
+    <td align="center">39.0</td>
+    <td align="center">38.3</td>
+    <td align="center">26.6</td>
+    <td align="center">27.9</td>
+    <td align="center">36.3</td>
+    <td align="center">34.6</td>
+    <td align="center">33.6</td>
+    <td align="center">38.5</td>
+    <td align="center">28.4</td>
+    <td align="center">33.0</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SimSiam</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
+    <td align="center">38.8</td>
+    <td align="center">35.1</td>
+    <td align="center">38.1</td>
     <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">38.8</td>
+    <td align="center">29.2</td>
+    <td align="center">37.7</td>
+    <td align="center">39.1</td>
+    <td align="center">43.4</td>
+    <td align="center">41.6</td>
+    <td align="center">39.5</td>
+    <td align="center">30.0</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">SoftTriple</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
+    <td align="center">35.2</td>
+    <td align="center">35.9</td>
+    <td align="center">43.8</td>
+    <td align="center">37.3</td>
+    <td align="center">26.6</td>
+    <td align="center">29.6</td>
+    <td align="center">42.4</td>
+    <td align="center">35.5</td>
+    <td align="center">34.1</td>
     <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">26.4</td>
+    <td align="center">45.8</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
     <td align="center">ProxyAnchor</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
+    <td align="center">36.2</td>
+    <td align="center">37.2</td>
+    <td align="center">39.9</td>
     <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
+    <td align="center">27.2</td>
+    <td align="center">36.9</td>
+    <td align="center">37.8</td>
+    <td align="center">36.0</td>
+    <td align="center">34.0</td>
+    <td align="center">42.0</td>
+    <td align="center">27.7</td>
+    <td align="center">30.6</td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
   <tr>
@@ -404,238 +408,6 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
     <td align="center"><b>66.1</b></td>
     <td align="center"><b>88.7</b></td>
     <td align="center"><b>94.0</b></td>
-    <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
-  </tr>
-</tbody>
-</table>
-
-### DomainNet
-
-<table>
-<thead>
-  <tr>
-    <th>Method</th>
-    <th colspan="2">Clipart &lt;--&gt; Infograph</th>
-    <th colspan="2">Clipart &lt;--&gt; Painting</th>
-    <th colspan="2">Clipart &lt;--&gt; Quickdraw</th>
-    <th colspan="2">Clipart &lt;--&gt; Real</th>
-    <th colspan="2">Clipart &lt;--&gt; Sketch</th>
-    <th colspan="2">Infograph &lt;--&gt; Painting</th>
-    <th colspan="2">Infograph &lt;--&gt; Quickdraw</th>
-    <th colspan="2">Infograph &lt;--&gt; Real</th>
-    <th colspan="2">Infograph &lt;--&gt; Sketch</th>
-    <th colspan="2">Painting &lt;--&gt; Quickdraw</th>
-    <th colspan="2">Painting &lt;--&gt; Real</th>
-    <th colspan="2">Painting &lt;--&gt; Sketch</th>
-    <th colspan="2">Quickdraw &lt;--&gt; Real</th>
-    <th colspan="2">Quickdraw &lt;--&gt; Sketch</th>
-    <th colspan="2">Real &lt;--&gt; Sketch</th>
-    <th>Download</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td align="center">NPID</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">93.6</td>
-    <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
-  </tr>
-  <tr>
-    <td align="center">SimCLR</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
-  </tr>
-  <tr>
-    <td align="center">SimSiam</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
-  </tr>
-  <tr>
-    <td align="center">SoftTriple</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
-  </tr>
-  <tr>
-    <td align="center">ProxyAnchor</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">99.0</td>
-    <td align="center">38.0</td>
-    <td align="center">80.8</td>
-    <td align="center">94.1</td>
-    <td align="center">41.3</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center">49.3</td>
-    <td align="center">82.4</td>
-    <td align="center">88.0</td>
-    <td align="center">41.4</td>
-    <td align="center">68.8</td>
-    <td align="center">82.8</td>
-    <td align="center">93.6</td>
-    <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
-  </tr>
-  <tr>
-    <td align="center">ZsCo</td>
-    <td align="center"><b>48.6</b></td>
-    <td align="center"><b>83.7</b></td>
-    <td align="center"><b>93.1</b></td>
-    <td align="center"><b>50.3</b></td>
-    <td align="center"><b>86.4</b></td>
-    <td align="center"><b>94.6</b></td>
-    <td align="center"><b>45.9</b></td>
-    <td align="center"><b>79.8</b></td>
-    <td align="center"><b>89.0</b></td>
-    <td align="center"><b>66.1</b></td>
-    <td align="center"><b>88.7</b></td>
-    <td align="center"><b>94.0</b></td>
-    <td align="center"><b>48.6</b></td>
-    <td align="center"><b>83.7</b></td>
-    <td align="center"><b>93.1</b></td>
-    <td align="center"><b>50.3</b></td>
-    <td align="center"><b>86.4</b></td>
-    <td align="center"><b>94.6</b></td>
-    <td align="center"><b>45.9</b></td>
-    <td align="center"><b>79.8</b></td>
-    <td align="center"><b>89.0</b></td>
-    <td align="center"><b>66.1</b></td>
-    <td align="center"><b>88.7</b></td>
-    <td align="center"><b>94.0</b></td>
-    <td align="center"><b>48.6</b></td>
-    <td align="center"><b>83.7</b></td>
-    <td align="center"><b>93.1</b></td>
-    <td align="center"><b>50.3</b></td>
-    <td align="center"><b>86.4</b></td>
-    <td align="center"><b>94.6</b></td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
 </tbody>
