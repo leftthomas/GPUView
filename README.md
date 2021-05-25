@@ -205,18 +205,18 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
   </tr>
   <tr>
     <td align="center">ZsCo</td>
-    <td align="center"><b>48.6</b></td>
-    <td align="center"><b>83.7</b></td>
-    <td align="center"><b>93.1</b></td>
-    <td align="center"><b>50.3</b></td>
-    <td align="center"><b>86.4</b></td>
-    <td align="center"><b>94.6</b></td>
-    <td align="center"><b>45.9</b></td>
-    <td align="center"><b>79.8</b></td>
-    <td align="center"><b>89.0</b></td>
-    <td align="center"><b>66.1</b></td>
-    <td align="center"><b>88.7</b></td>
-    <td align="center"><b>94.0</b></td>
+    <td align="center"><b>43.6</b></td>
+    <td align="center"><b>42.4</b></td>
+    <td align="center"><b>49.5</b></td>
+    <td align="center"><b>48.9</b></td>
+    <td align="center"><b>38.2</b></td>
+    <td align="center"><b>42.2</b></td>
+    <td align="center"><b>45.1</b></td>
+    <td align="center"><b>42.7</b></td>
+    <td align="center"><b>43.3</b></td>
+    <td align="center"><b>43.1</b></td>
+    <td align="center"><b>39.5</b></td>
+    <td align="center"><b>30.4</b></td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
 </tbody>
@@ -287,12 +287,12 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
   </tr>
   <tr>
     <td align="center">ZsCo</td>
-    <td align="center"><b>48.6</b></td>
-    <td align="center"><b>83.7</b></td>
-    <td align="center"><b>93.1</b></td>
-    <td align="center"><b>88.7</b></td>
-    <td align="center"><b>94.0</b></td>
-    <td align="center"><b>94.0</b></td>
+    <td align="center"><b>32.4</b></td>
+    <td align="center"><b>26.3</b></td>
+    <td align="center"><b>29.6</b></td>
+    <td align="center"><b>24.8</b></td>
+    <td align="center"><b>43.8</b></td>
+    <td align="center"><b>44.2</b></td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
 </tbody>
@@ -396,18 +396,18 @@ and `softtriple`. `lr` is `2e-4` and `betas` is `(0.5, 0.999)` for GAN, other hy
   </tr>
   <tr>
     <td align="center">ZsCo</td>
-    <td align="center"><b>48.6</b></td>
-    <td align="center"><b>83.7</b></td>
-    <td align="center"><b>93.1</b></td>
-    <td align="center"><b>50.3</b></td>
-    <td align="center"><b>86.4</b></td>
-    <td align="center"><b>94.6</b></td>
-    <td align="center"><b>45.9</b></td>
-    <td align="center"><b>79.8</b></td>
-    <td align="center"><b>89.0</b></td>
-    <td align="center"><b>66.1</b></td>
-    <td align="center"><b>88.7</b></td>
-    <td align="center"><b>94.0</b></td>
+    <td align="center"><b>25.1</b></td>
+    <td align="center"><b>26.2</b></td>
+    <td align="center"><b>23.7</b></td>
+    <td align="center"><b>25.0</b></td>
+    <td align="center"><b>27.5</b></td>
+    <td align="center"><b>28.1</b></td>
+    <td align="center"><b>29.4</b></td>
+    <td align="center"><b>29.4</b></td>
+    <td align="center"><b>32.8</b></td>
+    <td align="center"><b>30.5</b></td>
+    <td align="center"><b>30.9</b></td>
+    <td align="center"><b>30.1</b></td>
     <td align="center"><a href="https://pan.baidu.com/s/1PWLOBKWb8gUUibXOX9OQyA">hu2k</a></td>
   </tr>
 </tbody>
