@@ -11,7 +11,7 @@ host_db_path = os.path.join(abs_path, 'hosts.db')
 TEMPLATE_PATH.insert(0, abs_views_path)
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 DATE_FORMAT = '%Y/%m/%d %H:%M:%S %p'
-logging.basicConfig(filename='/tmp/gpuview.log', level=logging.ERROR, format=LOG_FORMAT, datefmt=DATE_FORMAT)
+logging.basicConfig(filename='/tmp/gpuview_error.log', level=logging.ERROR, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 
 def local_gpu_stat():
