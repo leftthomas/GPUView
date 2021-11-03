@@ -45,6 +45,15 @@ def report_gpu_stat():
     return json.dumps(resp, indent=4)
 
 
+@app.route('/gpustats', methods=['GET'])
+def report_gpu_stats():
+    """
+    Returns the gpu stat of all hosts.
+    """
+    resp = core.all_gpu_stats()
+    return json.dumps(resp, indent=4)
+
+
 def main():
     parser = arg_parser()
     args = parser.parse_args()

@@ -6,7 +6,7 @@ from bottle import TEMPLATE_PATH
 
 abs_path = os.path.dirname(os.path.realpath(__file__))
 abs_views_path = os.path.join(abs_path, 'views')
-host_db_path = os.path.join(abs_path, 'gpu_hosts.db')
+host_db_path = os.path.join(abs_path, 'hosts.db')
 TEMPLATE_PATH.insert(0, abs_views_path)
 
 
@@ -103,7 +103,7 @@ def all_gpu_stats():
 
 def load_hosts():
     """
-    Loads the list of registered gpu nodes from file.
+    Loads the list of registered gpu host from file.
 
     Returns:
         dict: {url: name, ... }
@@ -111,16 +111,11 @@ def load_hosts():
 
     hosts = {}
     if not os.path.exists(host_db_path):
-        print("There are no registered hosts! Use `gpuview add` first.")
         return hosts
 
     for line in open(host_db_path, 'r'):
-        try:
-            name, url = line.strip().split('\t')
-            hosts[url] = name
-        except Exception as e:
-            print('Error: %s loading host: %s!' %
-                  (getattr(e, 'message', str(e)), line))
+        name, url = line.strip().split('\t')
+        hosts[url] = name
     return hosts
 
 
@@ -131,7 +126,6 @@ def save_hosts(hosts):
 
 
 def add_host(url, name=None):
-    url = url.strip().strip('/')
     if name is None:
         name = url
     hosts = load_hosts()
@@ -156,4 +150,5 @@ def print_hosts():
         print('#   Name\tURL')
         for idx, host in enumerate(hosts):
             print('%02d. %s\t%s' % (idx + 1, host[1], host[0]))
-
+    else:
+        print("There are no registered hosts! Use `gpuview add` first.")
