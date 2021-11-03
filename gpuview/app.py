@@ -1,21 +1,17 @@
 import argparse
 import json
-import os
 from datetime import datetime
 
-from bottle import Bottle, TEMPLATE_PATH, template, response
+from bottle import Bottle, template
 
-from . import core
+from gpuview import core
 
 app = Bottle()
-abs_path = os.path.dirname(os.path.realpath(__file__))
-abs_views_path = os.path.join(abs_path, 'views')
-TEMPLATE_PATH.insert(0, abs_views_path)
 
 
 def arg_parser():
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help='Action')
+    subparsers = parser.add_subparsers(dest='action', help='Action')
 
     run_parser = subparsers.add_parser('run', help='Run GPUView server')
     run_parser.add_argument('--host', required=True, type=str, help='IP address of host (eg. 0.0.0.0)')
@@ -35,30 +31,18 @@ def arg_parser():
 
 @app.route('/')
 def index():
-    gpustats = core.all_gpustats()
+    gpu_stats = core.all_gpu_stats()
     now = datetime.now().strftime('Updated at %Y-%m-%d %H-%M-%S')
-    return template('index', gpustats=gpustats, update_time=now)
+    return template('index', gpu_stats=gpu_stats, update_time=now)
 
 
 @app.route('/gpustat', methods=['GET'])
-def report_gpustat():
+def report_gpu_stat():
     """
-    Returns the gpustat of this host.
-        See `exclude-self` option of `gpuview run`.
+    Returns the gpu stat of this host.
     """
-
-    def _date_handler(obj):
-        if hasattr(obj, 'isoformat'):
-            return obj.isoformat()
-        else:
-            raise TypeError(type(obj))
-
-    response.content_type = 'application/json'
-    if EXCLUDE_SELF:
-        resp = {'error': 'Excluded self!'}
-    else:
-        resp = core.my_gpustat()
-    return json.dumps(resp, default=_date_handler)
+    resp = core.local_gpu_stat()
+    return json.dumps(resp, indent=4)
 
 
 def main():
@@ -66,15 +50,7 @@ def main():
     args = parser.parse_args()
 
     if 'run' == args.action:
-        core.safe_zone(args.safe_zone)
-        global EXCLUDE_SELF
-        EXCLUDE_SELF = args.exclude_self
-        app.run(host=args.host, port=args.port, debug=args.debug)
-    elif 'service' == args.action:
-        core.install_service(host=args.host,
-                             port=args.port,
-                             safe_zone=args.safe_zone,
-                             exclude_self=args.exclude_self)
+        app.run(host=args.host, port=args.port)
     elif 'add' == args.action:
         core.add_host(args.url, args.name)
     elif 'remove' == args.action:

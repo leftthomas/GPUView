@@ -1,32 +1,23 @@
 import json
 import os
-import subprocess
+from urllib.request import urlopen
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import urlopen
+from bottle import TEMPLATE_PATH
 
-ABS_PATH = os.path.dirname(os.path.realpath(__file__))
-HOSTS_DB = os.path.join(ABS_PATH, 'gpuhosts.db')
-SAFE_ZONE = False  # Safe to report all details.
+abs_path = os.path.dirname(os.path.realpath(__file__))
+abs_views_path = os.path.join(abs_path, 'views')
+host_db_path = os.path.join(abs_path, 'gpu_hosts.db')
+TEMPLATE_PATH.insert(0, abs_views_path)
 
 
-def safe_zone(safe=False):
-    global SAFE_ZONE
-    SAFE_ZONE = safe
-
-
-def my_gpustat():
+def local_gpu_stat():
     """
-    Returns a [safe] version of gpustat for this host.
-        # See `--safe-zone` option of `gpuview start`.
-        # Omit sensitive details, eg. uuid, username, and processes.
-        # Set color flag based on gpu temperature:
-            # bg-warning, bg-danger, bg-success, bg-primary
+    Returns gpu stat for this host.
+        # Set color flag based on gpu temperature
+        # bg-warning, bg-danger, bg-success, bg-primary
 
     Returns:
-        dict: gpustat
+        dict: gpu stat
     """
 
     try:
@@ -74,18 +65,17 @@ def my_gpustat():
         return {'error': '%s!' % getattr(e, 'message', str(e))}
 
 
-def all_gpustats():
+def all_gpu_stats():
     """
-    Aggregates the gpustats of all registered hosts and this host.
+    Aggregates the gpu stats of all registered hosts and this host.
 
     Returns:
-        list: pustats of hosts
+        list: gpu stats of hosts
     """
 
-    gpustats = []
-    mystat = my_gpustat()
-    if 'gpus' in mystat:
-        gpustats.append(mystat)
+    gpu_stats, local_stat = [], local_gpu_stat()
+    if 'gpus' in local_stat:
+        gpu_stats.append(local_stat)
 
     hosts = load_hosts()
     for url in hosts:
@@ -97,18 +87,18 @@ def all_gpustats():
                 continue
             if hosts[url] != url:
                 gpustat['hostname'] = hosts[url]
-            gpustats.append(gpustat)
+            gpu_stats.append(gpustat)
         except Exception as e:
             print('Error: %s getting gpustat from %s' %
                   (getattr(e, 'message', str(e)), url))
 
     try:
-        sorted_gpustats = sorted(gpustats, key=lambda g: g['hostname'])
+        sorted_gpustats = sorted(gpu_stats, key=lambda g: g['hostname'])
         if sorted_gpustats is not None:
             return sorted_gpustats
     except Exception as e:
         print("Error: %s" % getattr(e, 'message', str(e)))
-    return gpustats
+    return gpu_stats
 
 
 def load_hosts():
@@ -120,11 +110,11 @@ def load_hosts():
     """
 
     hosts = {}
-    if not os.path.exists(HOSTS_DB):
+    if not os.path.exists(host_db_path):
         print("There are no registered hosts! Use `gpuview add` first.")
         return hosts
 
-    for line in open(HOSTS_DB, 'r'):
+    for line in open(host_db_path, 'r'):
         try:
             name, url = line.strip().split('\t')
             hosts[url] = name
@@ -135,7 +125,7 @@ def load_hosts():
 
 
 def save_hosts(hosts):
-    with open(HOSTS_DB, 'w') as f:
+    with open(host_db_path, 'w') as f:
         for url in hosts:
             f.write('%s\t%s\n' % (hosts[url], url))
 
@@ -167,17 +157,3 @@ def print_hosts():
         for idx, host in enumerate(hosts):
             print('%02d. %s\t%s' % (idx + 1, host[1], host[0]))
 
-
-def install_service(host=None, port=None,
-                    safe_zone=False, exclude_self=False):
-    arg = ''
-    if host is not None:
-        arg += '--host %s ' % host
-    if port is not None:
-        arg += '--port %s ' % port
-    if safe_zone:
-        arg += '--safe-zone '
-    if exclude_self:
-        arg += '--exclude-self '
-    script = os.path.join(ABS_PATH, 'service.sh')
-    subprocess.call('{} "{}"'.format(script, arg.strip()), shell=True)
