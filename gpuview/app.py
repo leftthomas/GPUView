@@ -14,11 +14,11 @@ def arg_parser():
     subparsers = parser.add_subparsers(dest='action', help='Action')
 
     run_parser = subparsers.add_parser('run', help='Run GPUView server')
-    run_parser.add_argument('--host', required=True, type=str, help='IP address of host (eg. 0.0.0.0)')
+    run_parser.add_argument('--host', required=True, type=str, help='IP address of host (e.g. 127.0.0.1)')
     run_parser.add_argument('--port', type=int, default=9988, help='Port number of host (default: 9988)')
 
-    add_parser = subparsers.add_parser('add', help='Register a new GPU host')
-    add_parser.add_argument('--url', required=True, type=str, help='URL of GPU host (IP:Port, eg. X.X.X.X:9988')
+    add_parser = subparsers.add_parser('add', help='Register a GPU host')
+    add_parser.add_argument('--url', required=True, type=str, help='URL of GPU host (IP:Port, e.g. X.X.X.X:9988)')
     add_parser.add_argument('--name', default=None, type=str, help='An optional readable name for the GPU host')
 
     rem_parser = subparsers.add_parser('remove', help='Remove a GPU host')
