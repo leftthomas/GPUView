@@ -1,12 +1,4 @@
-#!/usr/bin/env python
-
-"""
-Web API of gpuview.
-
-@author Fitsum Gaim
-@url https://github.com/fgaim
-"""
-
+import argparse
 import json
 import os
 from datetime import datetime
@@ -14,7 +6,6 @@ from datetime import datetime
 from bottle import Bottle, TEMPLATE_PATH, template, response
 
 from . import core
-from . import utils
 
 app = Bottle()
 abs_path = os.path.dirname(os.path.realpath(__file__))
@@ -22,6 +13,38 @@ abs_views_path = os.path.join(abs_path, 'views')
 TEMPLATE_PATH.insert(0, abs_views_path)
 
 EXCLUDE_SELF = False  # Do not report to `/gpustat` calls.
+
+
+def arg_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    subparsers = parser.add_subparsers(dest='action', help='Action')
+
+    base_parser = argparse.ArgumentParser(add_help=False)
+    base_parser.add_argument('--host', default='0.0.0.0',
+                             help='IP address of host (default: 0.0.0.0)')
+    base_parser.add_argument('--port', default=9988,
+                             help='Port number of host (default: 9988)')
+    base_parser.add_argument('--safe-zone', action='store_true',
+                             help='Report all details including usernames')
+    base_parser.add_argument('--exclude-self', action='store_true',
+                             help='Don\'t report to others but self-dashboard')
+    run_parser = subparsers.add_parser('run', parents=[base_parser],
+                                       help='Run gpuview server')
+    run_parser.add_argument('-d', '--debug', action='store_true',
+                            help='Run server in debug mode')
+    add_parser = subparsers.add_parser('add', help='Register a new GPU host')
+    add_parser.add_argument('--url', required=True,
+                            help='URL of GPU host (IP:Port, eg. X.X.X.X:9988')
+    add_parser.add_argument('--name', default=None,
+                            help='An optional readable name for the GPU host')
+    rem_parser = subparsers.add_parser('remove', help='Remove a GPU host')
+    rem_parser.add_argument('--url', required=True,
+                            help='Url of the GPU node to remove')
+    subparsers.add_parser('hosts', help='Print all GPU hosts')
+    subparsers.add_parser('service', parents=[base_parser],
+                          help='Install gpuview as a service')
+
+    return parser
 
 
 @app.route('/')
@@ -53,7 +76,7 @@ def report_gpustat():
 
 
 def main():
-    parser = utils.arg_parser()
+    parser = arg_parser()
     args = parser.parse_args()
 
     if 'run' == args.action:

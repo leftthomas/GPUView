@@ -1,10 +1,3 @@
-"""
-Core functions of gpuview.
-
-@author Fitsum Gaim
-@url https://github.com/fgaim
-"""
-
 import json
 import os
 import subprocess
