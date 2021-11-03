@@ -70,7 +70,7 @@ def all_gpu_stats():
     hosts = load_hosts()
     for url in hosts:
         try:
-            raw_resp = urlopen(url + '/gpustat')
+            raw_resp = urlopen('https://' + url + '/gpustat')
             gpu_stat = json.loads(raw_resp.read())
             raw_resp.close()
             if not gpu_stat or 'gpus' not in gpu_stat:

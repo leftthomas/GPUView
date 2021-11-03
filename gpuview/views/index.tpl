@@ -66,12 +66,12 @@
                             <thead>
                                 <tr>
                                     <th scope="col">Host</th>
-                                    <th scope="col">GPU ID/Name</th>
+                                    <th scope="col">GPU ID / Name</th>
                                     <th scope="col">Temp.</th>
                                     <th scope="col">Util.</th>
-                                    <th scope="col">Mem. Use/Cap</th>
-                                    <th scope="col">Power Use/Cap</th>
-                                    <th scope="col">Users/Prog</th>
+                                    <th scope="col">Mem. Use / Cap</th>
+                                    <th scope="col">Power Use / Cap</th>
+                                    <th scope="col">Users / Prog</th>
                                 </tr>
                             </thead>
                             <tbody>
