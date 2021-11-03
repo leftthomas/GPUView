@@ -17,7 +17,7 @@
 
 <body class="fixed-nav sticky-footer bg-dark" id="page-top">
     <div class="content-wrapper">
-        <div class="container-fluid" style="padding: 70px 40px 40px 40px">
+        <div class="container-fluid" style="padding: 20px 20px 20px 20px">
             <div class="row">
                 % for gpu_stat in gpu_stats:
                 % for gpu in gpu_stat.get('gpus', []):
@@ -35,7 +35,7 @@
                             <span class="float-left">
                                 <span class="text-nowrap">
                                 <i class="fa fa-thermometer-three-quarters" aria-hidden="true"></i>
-                                Temp. {{ gpu.get('temperature', '-') }}&#8451;
+                                Temp. {{ gpu.get('temperature.gpu', '-') }}&#8451;
                                 </span> |
                                 <span class="text-nowrap">
                                 <i class="fa fa-microchip" aria-hidden="true"></i>
@@ -43,7 +43,7 @@
                                 </span> |
                                 <span class="text-nowrap">
                                 <i class="fa fa-cogs" aria-hidden="true"></i>
-                                Util. {{ gpu.get('utilization', '-') }}%
+                                Util. {{ gpu.get('utilization.gpu', '-') }}%
                                 </span> |
                                 <span class="text-nowrap">
                                 <i class="fa fa-users" aria-hidden="true"></i>
@@ -62,28 +62,28 @@
                     <i class="fa fa-table"></i> All Hosts and GPUs</div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th scope="col">Host</th>
-                                    <th scope="col">GPU</th>
+                                    <th scope="col">GPU ID/Name</th>
                                     <th scope="col">Temp.</th>
                                     <th scope="col">Util.</th>
-                                    <th scope="col">Memory</th>
-                                    <th scope="col">Power</th>
-                                    <th scope="col">Users</th>
+                                    <th scope="col">Mem. Use/Cap</th>
+                                    <th scope="col">Power Use/Cap</th>
+                                    <th scope="col">Users/Prog</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 % for gpu_stat in gpu_stats:
                                 % for gpu in gpu_stat.get('gpus', []):
-                                <tr class="small" id={{ gpu_stat.get('hostname', '-') }}>
+                                <tr class="small">
                                     <th scope="row">{{ gpu_stat.get('hostname', '-') }} </th>
                                     <td> [{{ gpu.get('index', '') }}] {{ gpu.get('name', '-') }} </td>
                                     <td> {{ gpu.get('temperature.gpu', '-') }}&#8451; </td>
                                     <td> {{ gpu.get('utilization.gpu', '-') }}% </td>
-                                    <td> {{ gpu.get('memory', '-') }}% ({{ gpu.get('memory.used', '') }}/{{ gpu.get('memory.total', '-') }}) </td>
-                                    <td> {{ gpu.get('power.draw', '-') }} / {{ gpu.get('enforced.power.limit', '-') }} </td>
+                                    <td> {{ gpu.get('memory', '-') }}% ({{ gpu.get('memory.used', '') }}MB / {{ gpu.get('memory.total', '-') }}MB) </td>
+                                    <td> {{ gpu.get('power.draw', '-') }}W / {{ gpu.get('enforced.power.limit', '-') }}W </td>
                                     <td> {{ gpu.get('user_processes', '-') }} </td>
                                 </tr>
                                 % end
