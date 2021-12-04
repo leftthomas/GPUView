@@ -1,7 +1,7 @@
 import argparse
 import json
 from datetime import datetime
-from gevent import  monkey.patch_all()
+from gevent import monkey.patch_all()
 from bottle import Bottle, template
 
 from gpuview import core
