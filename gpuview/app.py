@@ -50,7 +50,7 @@ def main():
     args = parser.parse_args()
 
     if 'run' == args.action:
-        app.run(host=args.host, port=args.port)
+        app.run(server='gevent', host=args.host, port=args.port)
     elif 'add' == args.action:
         core.add_host(args.url, args.name)
     elif 'remove' == args.action:
