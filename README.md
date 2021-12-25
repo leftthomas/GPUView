@@ -16,7 +16,6 @@ Setup
 -----
 
 ```
-$ pip install gevent 
 $ pip install git+https://github.com/leftthomas/GPUView.git@master
 ```
 
